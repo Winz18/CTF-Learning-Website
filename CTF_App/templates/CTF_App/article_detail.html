@@ -97,10 +97,10 @@
                     <h2 class="mb-0">{{ article.name }}</h2>
                 </div>
                 <div class="card-body">
-                    <p><strong class="text-info">Author:</strong> {{ article.author }}</p>
-                    <p><strong class="text-info">Date:</strong> {{ article.date }}</p>
-                    <hr class="bg-light">
-                    <p>{{ article.content }}</p>
+                    <p class="mb-4"><strong class="text-info">Author:</strong> {{ article.author }}</p>
+                    <p class="mb-4"><strong class="text-info">Date:</strong> {{ article.date }}</p>
+                    <hr class="bg-light mb-4">
+                    <p class="mb-4" style="color: #ccc;">{{ article.content }}</p> <!-- Thêm lớp mb-4 để tạo khoảng cách dòng -->
                 </div>
             </div>
         </div>
