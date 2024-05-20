@@ -16,10 +16,13 @@
             background-color: #121212; /* Màu đen */
             color: #fff; /* Màu chữ trắng */
         }
+
+        h2 {
+            color: #f1c40f;
+        }
     </style>
 </head>
 <body>
-
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="{% url 'CTF_App:index' %}">
@@ -34,14 +37,14 @@
         <div class="collapse navbar-collapse" id="navbarTogglerDemo02">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                 <li class="nav-item">
-                    <a class="nav-link active" aria-current="page" href="{% url 'CTF_App:index' %}"
+                    <a class="nav-link active" aria-current="page" href="{% url 'CTF_App:index' %} "
                        style="color: white">Home</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'CTF_App:scoreboard' %}" style="color: white">Scoreboard</a>
                 </li>
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
+                    <a class="nav-link dropdown-toggle" id="navbarDropdown" role="button"
                        data-bs-toggle="dropdown" aria-expanded="false" style="color: white">
                         Categories
                     </a>
@@ -65,29 +68,30 @@
         </div>
     </div>
 </nav>
-<div class="container" style="color: #fff;"> <!-- Thêm kiểu CSS để đặt màu chữ trắng -->
-    <div class="row">
-        <div class="col text-center">
-            <h2>
-                Recent Posts
-            </h2>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col">
-            {% for article in latest_article_list %}
-            <div class="card mb-3 bg-dark"> <!-- Thêm kiểu CSS để đặt màu nền đen -->
-                <div class="card-body">
-                    <h5 class="card-title">
-                        <a href="{% url 'CTF_App:article_detail' article.id %}" style="color: #fff;">{{ article.name
-                            }}</a> <!-- Thêm kiểu CSS để đặt màu chữ trắng -->
-                    </h5>
-                </div>
-            </div>
+<div class="container mt-5">
+    <h2 class="text-center">Scoreboard</h2>
+    <div class="table-responsive">
+        <table class="table table-dark table-striped">
+            <thead>
+            <tr class="text-center">
+                <th>Rank</th>
+                <th>Username</th>
+                <th>Score</th>
+                <th>Date Joined</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for user in users %}
+            <tr class="text-center">
+                <td>{{ forloop.counter }}</td>
+                <td>{{ user.username }}</td>
+                <td>{{ user.customuser.score }}</td>
+                <td>{{ user.date_joined }}</td>
+            </tr>
             {% endfor %}
-        </div>
+            </tbody>
+        </table>
     </div>
 </div>
-
 </body>
 </html>

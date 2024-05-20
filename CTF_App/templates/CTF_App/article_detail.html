@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="{% static 'static/css/style.css' %}">
     <style>
         body {
-            background-color: #121212; /* Màu đen */
+            background-color: #121212; /* Màu nền đen */
             color: #fff; /* Màu chữ trắng */
         }
     </style>
@@ -22,7 +22,7 @@
 
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="#">
+        <a class="navbar-brand" href="{% url 'CTF_App:index' %}">
             <img src="{% static 'static/Media/Logo.jpg' %}" alt="logo" width="30" height="30"
                  class="d-inline-block align-text-top" id="logo">
             CTF Learning
@@ -34,14 +34,15 @@
         <div class="collapse navbar-collapse" id="navbarTogglerDemo02">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                 <li class="nav-item">
-                    <a class="nav-link active" aria-current="page" href="#">Home</a>
+                    <a class="nav-link active" aria-current="page" href="{% url 'CTF_App:index' %} "
+                       style="color: white">Home</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#">Scoreboard</a>
+                    <a class="nav-link" href="{% url 'CTF_App:scoreboard' %}" style="color: white">Scoreboard</a>
                 </li>
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
-                       data-bs-toggle="dropdown" aria-expanded="false">
+                       data-bs-toggle="dropdown" aria-expanded="false" style="color: white">
                         Categories
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
@@ -54,37 +55,13 @@
                 </li>
             </ul>
             {% if user.is_authenticated %}
-            <a class="btn btn-danger" href="#">Logout</a>
-            {% else %}
-            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#LoginModal">
-                Login
-            </button>
+            <a class="btn btn-danger" href="{% url 'CTF_App:logout' %}">Logout</a>
             {% endif %}
-            <!-- The Modal -->
-            <div class="modal" id="LoginModal">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <!-- Modal Header -->
-                        <div class="modal-header">
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-                        <!-- Modal body -->
-                        <div class="modal-body">
-                            <form action="" method="POST">
-                                {% csrf_token %}
-                                <h4>Username</h4>
-                                <input type="text" name="username" class="form-control" required>
-                                <h4>Password</h4>
-                                <input type="password" name="password" class="form-control" required>
-                                <a href="#">Create account</a>
-                                <div class="modal-footer">
-                                    <button class="btn btn-success">Login</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            {% if not user.is_authenticated %}
+            <a class="btn btn-success" href="{% url 'CTF_App:login' %}">Login</a>
+            <span style="margin-right: 30px;"></span>
+            <a class="btn btn-primary" href="{% url 'CTF_App:signup' %}">Signup</a>
+            {% endif %}
         </div>
     </div>
 </nav>
@@ -94,13 +71,13 @@
         <div class="col-md-8 offset-md-2">
             <div class="card bg-dark text-light">
                 <div class="card-header bg-dark text-light">
-                    <h2 class="mb-0">{{ article.name }}</h2>
+                    <h2 class="mb-0" style="color: lightseagreen">{{ article.name }}</h2>
                 </div>
                 <div class="card-body">
                     <p class="mb-4"><strong class="text-info">Author:</strong> {{ article.author }}</p>
                     <p class="mb-4"><strong class="text-info">Date:</strong> {{ article.date }}</p>
                     <hr class="bg-light mb-4">
-                    <p class="mb-4" style="color: #ccc;">{{ article.content }}</p> <!-- Thêm lớp mb-4 để tạo khoảng cách dòng -->
+                    <p class="mb-4" style="color: #ccc;">{{ article.content }}</p>
                 </div>
             </div>
         </div>
