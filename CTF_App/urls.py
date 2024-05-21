@@ -21,4 +21,16 @@ urlpatterns = [
 
     # URL pattern cho trang đăng ký
     path('signup/', views.user_signup, name='signup'),
+
+    # URL pattern cho trang profile
+    path('profile/', views.profile_view, name='profile'),
+
+    # URL pattern cho trang change_username
+    path('change_username/', views.change_username, name='change_username'),
+
+    # URL pattern cho trang change_email
+    path('change_email/', views.change_email, name='change_email'),
+
+    # URL pattern cho trang change_password
+    path('change_password/', views.change_password, name='change_password'),
 ]

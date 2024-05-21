@@ -3,10 +3,13 @@ from django.views import generic
 from django.shortcuts import get_object_or_404
 from .models import Articles, CustomUser
 from django.contrib.auth.models import User
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.shortcuts import render, redirect
 from django.contrib.auth.forms import UserCreationForm
 from django.urls import reverse
+from django.contrib.auth.decorators import login_required
+from django import forms
+from django.contrib import messages
 
 
 class IndexView(generic.ListView):
@@ -84,3 +87,85 @@ def user_signup(request):
 
     # Nếu không phải là phương thức POST, render template cho trang đăng ký
     return render(request, 'CTF_App/signup.html')
+
+
+@login_required
+def profile_view(request):
+    user = request.user
+    context = {
+        'user': user,
+        # Truy vấn các thông tin khác của người dùng từ database và truyền vào context
+    }
+    return render(request, 'CTF_App/profile.html', context)
+
+
+class ChangeUsernameForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['username']
+
+
+class ChangeEmailForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['email']
+
+
+class ChangePasswordForm(forms.Form):
+    old_password = forms.CharField(widget=forms.PasswordInput, label='Old Password')
+    new_password = forms.CharField(widget=forms.PasswordInput, label='New Password')
+    confirm_password = forms.CharField(widget=forms.PasswordInput, label='Confirm New Password')
+
+    def clean(self):
+        cleaned_data = super().clean()
+        new_password = cleaned_data.get("new_password")
+        confirm_password = cleaned_data.get("confirm_password")
+
+        if new_password != confirm_password:
+            raise forms.ValidationError("New password and confirm password do not match.")
+
+
+@login_required
+def change_username(request):
+    if request.method == 'POST':
+        form = ChangeUsernameForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Your username was successfully updated!')
+            return redirect('CTF_App:profile')
+    else:
+        form = ChangeUsernameForm(instance=request.user)
+    return render(request, 'CTF_App/change_username.html', {'form': form})
+
+
+@login_required
+def change_email(request):
+    if request.method == 'POST':
+        form = ChangeEmailForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Your email was successfully updated!')
+            return redirect('CTF_App:profile')
+    else:
+        form = ChangeEmailForm(instance=request.user)
+    return render(request, 'CTF_App/change_email.html', {'form': form})
+
+
+@login_required
+def change_password(request):
+    if request.method == 'POST':
+        form = ChangePasswordForm(request.POST)
+        if form.is_valid():
+            old_password = form.cleaned_data.get('old_password')
+            new_password = form.cleaned_data.get('new_password')
+            if request.user.check_password(old_password):
+                request.user.set_password(new_password)
+                request.user.save()
+                update_session_auth_hash(request, request.user)  # Important!
+                messages.success(request, 'Your password was successfully updated!')
+                return redirect('CTF_App:profile')
+            else:
+                messages.error(request, 'Old password is incorrect.')
+    else:
+        form = ChangePasswordForm()
+    return render(request, 'CTF_App/change_password.html', {'form': form})
