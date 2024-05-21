@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     {% load static %}
-    <title>CTF Learning</title>
+    <title>CTF Learning - Home</title>
     <link rel="icon" href="{% static 'static/Media/Logo.jpg' %}">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -38,6 +38,9 @@
                        style="color: white">Home</a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link" href="{% url 'CTF_App:article_create' %}" style="color: white">Contribute_article</a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link" href="{% url 'CTF_App:scoreboard' %}" style="color: white">Scoreboard</a>
                 </li>
                 <li class="nav-item dropdown">
@@ -46,11 +49,11 @@
                         Categories
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                        <li><a class="dropdown-item" href="#">Web Security</a></li>
-                        <li><a class="dropdown-item" href="#">Forensics</a></li>
-                        <li><a class="dropdown-item" href="#">Cryptography</a></li>
-                        <li><a class="dropdown-item" href="#">Binary Exploitation</a></li>
-                        <li><a class="dropdown-item" href="#">Reverse Engineering</a></li>
+                        <li><a class="dropdown-item" href="{% url 'CTF_App:index' %}?category=Web Security">Web Security</a></li>
+                        <li><a class="dropdown-item" href="{% url 'CTF_App:index' %}?category=Forensics">Forensics</a></li>
+                        <li><a class="dropdown-item" href="{% url 'CTF_App:index' %}?category=Cryptography">Cryptography</a></li>
+                        <li><a class="dropdown-item" href="{% url 'CTF_App:index' %}?category=Binary Exploitation">Binary Exploitation</a></li>
+                        <li><a class="dropdown-item" href="{% url 'CTF_App:index' %}?category=Reverse Engineering">Reverse Engineering</a></li>
                     </ul>
                 </li>
             </ul>

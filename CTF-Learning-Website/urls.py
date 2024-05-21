@@ -7,4 +7,4 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path("debug/", include("debug_toolbar.urls")),
     path("", include("CTF_App.urls")),
-]
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

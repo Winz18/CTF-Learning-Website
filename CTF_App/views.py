@@ -1,7 +1,7 @@
 from django.db.models import F
 from django.views import generic
 from django.shortcuts import get_object_or_404
-from .models import Articles, CustomUser
+from .models import Articles, CustomUser, ArticleSection
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.shortcuts import render, redirect
@@ -18,7 +18,14 @@ class IndexView(generic.ListView):
     model = Articles
 
     def get_queryset(self):
-        return Articles.objects.order_by(F("date").desc())
+        # Lấy chủ đề cần lọc từ request.GET
+        category = self.request.GET.get('category')
+
+        # Trả về queryset của các bài viết thuộc chủ đề mong muốn, sắp xếp theo thời gian xuất bản
+        if category:
+            return Articles.objects.filter(category=category).order_by('-date')
+        else:
+            return Articles.objects.all().order_by('-date')[:5]
 
 
 class DetailView(generic.DetailView):
@@ -52,7 +59,8 @@ def user_login(request):
             return redirect('CTF_App:index')
         else:
             # Return an 'invalid login' error message.
-            return render(request, "CTF_App/index.html", {'error_message': 'Invalid login'})
+            messages.error(request, 'Invalid username or password. Please try again.')
+            return render(request, "CTF_App/login.html")
     else:
         return render(request, 'CTF_App/login.html')
 
@@ -91,10 +99,14 @@ def user_signup(request):
 
 @login_required
 def profile_view(request):
-    user = request.user
+    current_user = request.user
+    ordered_users_list = CustomUser.objects.order_by('-score', '-contribution')
+    rank = list(ordered_users_list).index(current_user.customuser) + 1
     context = {
-        'user': user,
-        # Truy vấn các thông tin khác của người dùng từ database và truyền vào context
+        'user': current_user,
+        'score': CustomUser.objects.get(user=current_user).score,
+        'contribution': CustomUser.objects.get(user=current_user).contribution,
+        'rank': rank,
     }
     return render(request, 'CTF_App/profile.html', context)
 
@@ -106,6 +118,8 @@ class ChangeUsernameForm(forms.ModelForm):
 
 
 class ChangeEmailForm(forms.ModelForm):
+    email = forms.EmailField(widget=forms.EmailInput(attrs={'size': '50'}))
+
     class Meta:
         model = User
         fields = ['email']
@@ -169,3 +183,42 @@ def change_password(request):
     else:
         form = ChangePasswordForm()
     return render(request, 'CTF_App/change_password.html', {'form': form})
+
+
+class ArticleForm(forms.ModelForm):
+    class Meta:
+        model = Articles
+        fields = ['name', 'category']
+
+
+class ArticleSectionForm(forms.ModelForm):
+    class Meta:
+        model = ArticleSection
+        fields = ['part_type', 'text', 'image', 'video_url']
+
+
+class ArticleCreateView(generic.CreateView):
+    model = Articles
+    form_class = ArticleForm
+    template_name = 'CTF_App/article_form.html'
+
+    def form_valid(self, form):
+        form.instance.author = self.request.user
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse('CTF_App:article_detail', kwargs={'pk': self.object.pk})
+
+
+def add_section(request, article_id):
+    article = get_object_or_404(Articles, id=article_id)
+    if request.method == 'POST':
+        form = ArticleSectionForm(request.POST, request.FILES)
+        if form.is_valid():
+            section = form.save(commit=False)
+            section.article = article
+            section.save()
+            return redirect('CTF_App:article_detail', pk=article.id)
+    else:
+        form = ArticleSectionForm()
+    return render(request, 'CTF_App/add_section.html', {'form': form, 'article': article})
