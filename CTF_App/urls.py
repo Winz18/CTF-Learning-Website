@@ -33,4 +33,10 @@ urlpatterns = [
 
     # URL pattern cho trang change_password
     path('change_password/', views.change_password, name='change_password'),
+
+    # URL pattern cho trang tạo bài viết
+    path('articles/new/', views.ArticleCreateView.as_view(), name='article_create'),
+
+    # URL pattern cho trang sửa bài viết
+    path('articles/<uuid:article_id>/add_section/', views.add_section, name='add_section'),
 ]

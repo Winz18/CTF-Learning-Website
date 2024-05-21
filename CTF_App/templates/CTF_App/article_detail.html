@@ -16,6 +16,16 @@
             background-color: #121212; /* Màu nền đen */
             color: #fff; /* Màu chữ trắng */
         }
+
+        .article-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .content img, .content video {
+            max-width: 100%;
+            height: auto;
+        }
     </style>
 </head>
 <body>
@@ -46,11 +56,11 @@
                         Categories
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                        <li><a class="dropdown-item" href="#">Web Security</a></li>
-                        <li><a class="dropdown-item" href="#">Forensics</a></li>
-                        <li><a class="dropdown-item" href="#">Cryptography</a></li>
-                        <li><a class="dropdown-item" href="#">Binary Exploitation</a></li>
-                        <li><a class="dropdown-item" href="#">Reverse Engineering</a></li>
+                        <li><a class="dropdown-item" href="{% url 'CTF_App:index' %}?category=Web Security">Web Security</a></li>
+                        <li><a class="dropdown-item" href="{% url 'CTF_App:index' %}?category=Forensics">Forensics</a></li>
+                        <li><a class="dropdown-item" href="{% url 'CTF_App:index' %}?category=Cryptography">Cryptography</a></li>
+                        <li><a class="dropdown-item" href="{% url 'CTF_App:index' %}?category=Binary Exploitation">Binary Exploitation</a></li>
+                        <li><a class="dropdown-item" href="{% url 'CTF_App:index' %}?category=Reverse Engineering">Reverse Engineering</a></li>
                     </ul>
                 </li>
             </ul>
@@ -72,19 +82,31 @@
     <div class="row">
         <div class="col-md-8 offset-md-2">
             <div class="card bg-dark text-light">
-                <div class="card-header bg-dark text-light">
-                    <h2 class="mb-0" style="color: lightseagreen">{{ article.name }}</h2>
+                <div class="card-header article-header">
+                    <h2>{{ article.name }}</h2>
                 </div>
                 <div class="card-body">
                     <p class="mb-4"><strong class="text-info">Author:</strong> {{ article.author }}</p>
                     <p class="mb-4"><strong class="text-info">Date:</strong> {{ article.date }}</p>
                     <hr class="bg-light mb-4">
-                    <p class="mb-4" style="color: #ccc;">{{ article.content }}</p>
+                    <div class="content">
+                        {% for section in article.sections.all %}
+                            {% if section.part_type == 'text' %}
+                                <p>{{ section.text }}</p>
+                            {% elif section.part_type == 'image' %}
+                                <img src="{{ section.image.url }}" alt="Article Image" class="img-fluid mx-auto d-block">
+                            {% elif section.part_type == 'video' %}
+                                <iframe width="100%" height="400" src="{{ section.video_url }}" frameborder="0" allowfullscreen></iframe>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% if user.is_authenticated and user == article.author %}
+                        <a href="{% url 'CTF_App:add_section' article.id %}" class="btn btn-primary">Add Section</a>
+                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
 </div>
-
 </body>
 </html>
