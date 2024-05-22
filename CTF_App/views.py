@@ -1,7 +1,7 @@
 from django.db.models import F
 from django.views import generic
 from django.shortcuts import get_object_or_404
-from .models import Articles, CustomUser, ArticleSection
+from .models import Articles, CustomUser, Sections
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.shortcuts import render, redirect
@@ -33,9 +33,10 @@ class DetailView(generic.DetailView):
     model = Articles
     context_object_name = "article"
 
-    def get_object(self):
-        # Lấy đối tượng bài viết dựa trên id của nó
-        return get_object_or_404(Articles, id=self.kwargs['pk'])
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['sections'] = self.get_object().sections.order_by('position')
+        return context
 
 
 class ScoreboardView(generic.ListView):
@@ -84,7 +85,17 @@ def user_signup(request):
         # Lưu user mới vào cơ sở dữ liệu
         user.save()
 
-        # Đăng nhập người dùng sau khi đăng ký (tuỳ chọn)
+        # Tạo một CustomUser mới tương ứng với user mới
+        custom_user = CustomUser.objects.create(
+            user=user,
+            score=0,
+            contribution=0,
+            rank=0
+        )
+
+        # Lưu CustomUser mới vào cơ sở dữ liệu
+        custom_user.save()
+
         # authenticate và login giúp đăng nhập người dùng sau khi họ đăng ký
         user = authenticate(username=username, password=password)
         if user is not None:
@@ -193,7 +204,7 @@ class ArticleForm(forms.ModelForm):
 
 class ArticleSectionForm(forms.ModelForm):
     class Meta:
-        model = ArticleSection
+        model = Sections
         fields = ['part_type', 'text', 'image', 'video_url']
 
 
@@ -210,15 +221,66 @@ class ArticleCreateView(generic.CreateView):
         return reverse('CTF_App:article_detail', kwargs={'pk': self.object.pk})
 
 
-def add_section(request, article_id):
+@login_required
+def add_section(request, article_id, position=None):
     article = get_object_or_404(Articles, id=article_id)
+    if request.user != article.author:
+        return redirect('CTF_App:article_detail', pk=article.id)
+
     if request.method == 'POST':
         form = ArticleSectionForm(request.POST, request.FILES)
         if form.is_valid():
-            section = form.save(commit=False)
-            section.article = article
-            section.save()
+            new_section = form.save(commit=False)
+            new_section.article = article
+
+            if position is not None:
+                # Cập nhật vị trí của các section khác để tạo khoảng trống cho section mới
+                Sections.objects.filter(article=article, position__gte=position).update(position=F('position') + 1)
+                new_section.position = position
+            else:
+                # Nếu không chỉ định vị trí, thêm vào cuối
+                new_section.position = article.sections.count() + 1
+
+            new_section.save()
             return redirect('CTF_App:article_detail', pk=article.id)
     else:
         form = ArticleSectionForm()
-    return render(request, 'CTF_App/add_section.html', {'form': form, 'article': article})
+
+    return render(request, 'CTF_App/add_section.html', {'form': form, 'article': article, 'position': position})
+
+
+class EditSectionForm(forms.ModelForm):
+    class Meta:
+        model = Sections
+        fields = ['part_type', 'text', 'image', 'video_url']
+
+
+@login_required
+def edit_section(request, section_id):
+    section = get_object_or_404(Sections, id=section_id)
+    if request.user != section.article.author:
+        return redirect('CTF_App:article_detail', pk=section.article.id)
+
+    if request.method == 'POST':
+        form = EditSectionForm(request.POST, request.FILES, instance=section)
+        if form.is_valid():
+            form.save()
+            return redirect('CTF_App:article_detail', pk=section.article.id)
+    else:
+        form = EditSectionForm(instance=section)
+
+    return render(request, 'CTF_App/edit_section.html', {'form': form, 'section': section})
+
+
+@login_required
+def delete_section(request, section_id):
+    section = get_object_or_404(Sections, id=section_id)
+    if request.user != section.article.author:
+        return redirect('CTF_App:article_detail', pk=section.article.id)
+
+    if request.method == 'POST':
+        article_id = section.article.id
+        section.delete()
+        return redirect('CTF_App:article_detail', pk=article_id)
+
+    return render(request, 'CTF_App/delete_section.html', {'section': section})

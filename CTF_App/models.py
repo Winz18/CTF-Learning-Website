@@ -3,7 +3,6 @@ from django.db import models
 from django.contrib.auth.models import User
 
 
-
 class Test(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     difficulty = models.CharField(max_length=50)
@@ -22,7 +21,7 @@ class Articles(models.Model):
         return self.name
 
 
-class ArticleSection(models.Model):
+class Sections(models.Model):
     ARTICLE_PART_TYPES = [
         ('text', 'Text'),
         ('image', 'Image'),
@@ -35,9 +34,14 @@ class ArticleSection(models.Model):
     text = models.TextField(null=True, blank=True)
     image = models.ImageField(upload_to='article_images/', null=True, blank=True)
     video_url = models.URLField(max_length=200, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    position = models.PositiveIntegerField(default=0)
 
     def __str__(self):
-        return f"{self.article.name} - {self.part_type}"
+        return f"{self.article.name} - {self.part_type} - {self.position}"
+
+    class Meta:
+        ordering = ['position']
 
 
 class AuthorOfArticle(models.Model):

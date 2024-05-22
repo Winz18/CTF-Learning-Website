@@ -54,6 +54,9 @@
                        style="color: white">Home</a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link" href="{% url 'CTF_App:article_create' %}" style="color: white">Contribute_article</a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link" href="{% url 'CTF_App:scoreboard' %}" style="color: white">Scoreboard</a>
                 </li>
                 <li class="nav-item dropdown">
@@ -72,6 +75,8 @@
             </ul>
             {% if user.is_authenticated %}
             <a class="btn btn-danger" href="{% url 'CTF_App:logout' %}">Logout</a>
+            <span style="margin-right: 30px;"></span>
+            <a class="btn btn-primary" href="{% url 'CTF_App:profile' %}">Profile</a>
             {% endif %}
             {% if not user.is_authenticated %}
             <a class="btn btn-success" href="{% url 'CTF_App:login' %}">Login</a>

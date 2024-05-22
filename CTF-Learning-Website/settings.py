@@ -66,7 +66,7 @@ WSGI_APPLICATION = 'CTF-Learning-Website.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'ctf_app_db',
+        'NAME': 'ctf_learning',
         'USER': 'root',
         'PASSWORD': 'mysql',
         'HOST': 'localhost',

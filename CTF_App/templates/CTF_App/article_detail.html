@@ -48,6 +48,9 @@
                        style="color: white">Home</a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link" href="{% url 'CTF_App:article_create' %}" style="color: white">Contribute_article</a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link" href="{% url 'CTF_App:scoreboard' %}" style="color: white">Scoreboard</a>
                 </li>
                 <li class="nav-item dropdown">
@@ -77,7 +80,6 @@
         </div>
     </div>
 </nav>
-
 <div class="container mt-5">
     <div class="row">
         <div class="col-md-8 offset-md-2">
@@ -90,18 +92,26 @@
                     <p class="mb-4"><strong class="text-info">Date:</strong> {{ article.date }}</p>
                     <hr class="bg-light mb-4">
                     <div class="content">
-                        {% for section in article.sections.all %}
+                        {% for section in sections %}
                             {% if section.part_type == 'text' %}
-                                <p>{{ section.text }}</p>
+                                <div>{{ section.text|linebreaks }}</div>
                             {% elif section.part_type == 'image' %}
                                 <img src="{{ section.image.url }}" alt="Article Image" class="img-fluid mx-auto d-block">
                             {% elif section.part_type == 'video' %}
                                 <iframe width="100%" height="400" src="{{ section.video_url }}" frameborder="0" allowfullscreen></iframe>
                             {% endif %}
+                            {% if user.is_authenticated and user == article.author %}
+                                <a href="{% url 'CTF_App:edit_section' section.id %}" class="btn btn-warning">Edit</a>
+                                <span style="margin-right: 30px;"></span>
+                                <a href="{% url 'CTF_App:delete_section' section.id %}" class="btn btn-danger">Delete</a>
+                                <span style="margin-right: 30px;"></span>
+                                <a href="{% url 'CTF_App:add_section' article.id section.position %}" class="btn btn-primary">Add above</a>
+                                <p class="mb-4"><strong class="text-info"></strong>---------------------------------------------------------------------------------------------------------------------------</p>
+                            {% endif %}
                         {% endfor %}
                     </div>
-                    {% if user.is_authenticated and user == article.author %}
-                        <a href="{% url 'CTF_App:add_section' article.id %}" class="btn btn-primary">Add Section</a>
+                    {% if user == article.author %}
+                        <a href="{% url 'CTF_App:add_section' article.id %}" class="btn btn-primary">Add here</a>
                     {% endif %}
                 </div>
             </div>
