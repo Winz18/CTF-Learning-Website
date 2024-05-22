@@ -39,4 +39,10 @@ urlpatterns = [
 
     # URL pattern cho trang sửa bài viết
     path('articles/<uuid:article_id>/add_section/', views.add_section, name='add_section'),
+
+    # URL pattern cho trang sửa bài viết
+    path('section/edit/<uuid:section_id>/', views.edit_section, name='edit_section'),
+    path('section/delete/<uuid:section_id>/', views.delete_section, name='delete_section'),
+    path('article/<uuid:article_id>/add_section/', views.add_section, name='add_section'),
+    path('article/<uuid:article_id>/add_section/<int:position>/', views.add_section, name='add_section'),
 ]
