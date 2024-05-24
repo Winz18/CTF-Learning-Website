@@ -245,18 +245,31 @@ class ArticleCreateView(generic.CreateView):
 
 
 @login_required
-def add_section(request, article_id):
+def add_section(request, article_id, position=None):
     article = get_object_or_404(Articles, id=article_id)
+    if request.user != article.author:
+        return redirect('CTF_App:article_detail', pk=article.id)
+
     if request.method == 'POST':
         form = SectionForm(request.POST, request.FILES)
         if form.is_valid():
-            section = form.save(commit=False)
-            section.article = article
-            section.save()
+            new_section = form.save(commit=False)
+            new_section.article = article
+
+            if position is not None:
+                # Update positions of other sections to make room for the new section
+                Sections.objects.filter(article=article, position__gte=position).update(position=F('position') + 1)
+                new_section.position = position
+            else:
+                # If no position specified, add to the end
+                new_section.position = article.sections.count() + 1
+
+            new_section.save()
             return redirect('CTF_App:article_detail', pk=article.id)
     else:
         form = SectionForm()
-    return render(request, 'CTF_App/add_section.html', {'form': form, 'article': article})
+
+    return render(request, 'CTF_App/add_section.html', {'form': form, 'article': article, 'position': position})
 
 
 @login_required
