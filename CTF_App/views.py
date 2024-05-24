@@ -1,15 +1,20 @@
-from django.db.models import F
-from django.views import generic
-from django.shortcuts import get_object_or_404
-from .models import Articles, CustomUser, Sections
-from django.contrib.auth.models import User
-from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
-from django.shortcuts import render, redirect
-from django.contrib.auth.forms import UserCreationForm
-from django.urls import reverse
-from django.contrib.auth.decorators import login_required
+from ckeditor.widgets import CKEditorWidget
 from django import forms
 from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import User
+from django.db.models import F
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
+from django.shortcuts import render, redirect
+from django.urls import reverse
+from django.utils.decorators import method_decorator
+from django.views import generic
+from django.views.decorators.csrf import csrf_exempt
+from .models import Articles, Sections, Test, QuestionInTest, Question, Answer, Answer_Question, CustomUser
+from django.forms import inlineformset_factory
 
 
 class IndexView(generic.ListView):
@@ -20,12 +25,22 @@ class IndexView(generic.ListView):
     def get_queryset(self):
         # Lấy chủ đề cần lọc từ request.GET
         category = self.request.GET.get('category')
+        search_query = self.request.GET.get('search')
 
-        # Trả về queryset của các bài viết thuộc chủ đề mong muốn, sắp xếp theo thời gian xuất bản
+        queryset = Articles.objects.all()
+
         if category:
-            return Articles.objects.filter(category=category).order_by('-date')
-        else:
-            return Articles.objects.all().order_by('-date')[:5]
+            queryset = queryset.filter(category=category)
+
+        if search_query:
+            queryset = queryset.filter(name__icontains=search_query)
+
+        return queryset.order_by('-date')[:5]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['search_query'] = self.request.GET.get('search', '')
+        return context
 
 
 class DetailView(generic.DetailView):
@@ -202,10 +217,17 @@ class ArticleForm(forms.ModelForm):
         fields = ['name', 'category']
 
 
-class ArticleSectionForm(forms.ModelForm):
+class SectionForm(forms.ModelForm):
+    text = forms.CharField(widget=CKEditorWidget(), required=False)
+
     class Meta:
         model = Sections
         fields = ['part_type', 'text', 'image', 'video_url']
+        widgets = {
+            'text': forms.Textarea(attrs={'class': 'form-control', 'rows': 20, 'cols': 80}),
+            'image': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+            'video_url': forms.URLInput(attrs={'class': 'form-control'}),
+        }
 
 
 class ArticleCreateView(generic.CreateView):
@@ -222,65 +244,96 @@ class ArticleCreateView(generic.CreateView):
 
 
 @login_required
-def add_section(request, article_id, position=None):
+def add_section(request, article_id):
     article = get_object_or_404(Articles, id=article_id)
-    if request.user != article.author:
-        return redirect('CTF_App:article_detail', pk=article.id)
-
     if request.method == 'POST':
-        form = ArticleSectionForm(request.POST, request.FILES)
+        form = SectionForm(request.POST, request.FILES)
         if form.is_valid():
-            new_section = form.save(commit=False)
-            new_section.article = article
-
-            if position is not None:
-                # Cập nhật vị trí của các section khác để tạo khoảng trống cho section mới
-                Sections.objects.filter(article=article, position__gte=position).update(position=F('position') + 1)
-                new_section.position = position
-            else:
-                # Nếu không chỉ định vị trí, thêm vào cuối
-                new_section.position = article.sections.count() + 1
-
-            new_section.save()
+            section = form.save(commit=False)
+            section.article = article
+            section.save()
             return redirect('CTF_App:article_detail', pk=article.id)
     else:
-        form = ArticleSectionForm()
-
-    return render(request, 'CTF_App/add_section.html', {'form': form, 'article': article, 'position': position})
-
-
-class EditSectionForm(forms.ModelForm):
-    class Meta:
-        model = Sections
-        fields = ['part_type', 'text', 'image', 'video_url']
+        form = SectionForm()
+    return render(request, 'CTF_App/add_section.html', {'form': form, 'article': article})
 
 
 @login_required
 def edit_section(request, section_id):
     section = get_object_or_404(Sections, id=section_id)
-    if request.user != section.article.author:
-        return redirect('CTF_App:article_detail', pk=section.article.id)
-
     if request.method == 'POST':
-        form = EditSectionForm(request.POST, request.FILES, instance=section)
+        form = SectionForm(request.POST, request.FILES, instance=section)
         if form.is_valid():
             form.save()
-            return redirect('CTF_App:article_detail', pk=section.article.id)
+            return redirect(reverse('CTF_App:article_detail', args=[str(section.article.id)]))
     else:
-        form = EditSectionForm(instance=section)
+        form = SectionForm(instance=section)
 
-    return render(request, 'CTF_App/edit_section.html', {'form': form, 'section': section})
+    return render(request, 'CTF_App/edit_section.html', {'form': form})
 
 
 @login_required
 def delete_section(request, section_id):
     section = get_object_or_404(Sections, id=section_id)
-    if request.user != section.article.author:
-        return redirect('CTF_App:article_detail', pk=section.article.id)
+    article_id = section.article.id
+    section.delete()
+    return redirect(reverse('CTF_App:article_detail', args=[str(article_id)]))
+
+
+class QuestionForm(forms.ModelForm):
+    class Meta:
+        model = Question
+        fields = ['content']
+        widgets = {
+            'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+        }
+
+
+class AnswerForm(forms.ModelForm):
+    class Meta:
+        model = Answer
+        fields = ['content', 'result']
+        widgets = {
+            'content': forms.TextInput(attrs={'class': 'form-control'}),
+            'result': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+
+def take_test(request, article_id):
+    article = get_object_or_404(Articles, id=article_id)
+    test = get_object_or_404(Test, id=article.test.id)
+    questions_in_test = QuestionInTest.objects.filter(test=test)
+    questions = [qit.question for qit in questions_in_test]
 
     if request.method == 'POST':
-        article_id = section.article.id
-        section.delete()
-        return redirect('CTF_App:article_detail', pk=article_id)
+        score = 0
+        total = len(questions)
+        for question in questions:
+            correct_answers = Answer_Question.objects.filter(question=question, answer__result=True)
+            selected_answer_id = request.POST.get(f'question_{question.id}')
+            if selected_answer_id and int(selected_answer_id) in [ca.answer.id for ca in correct_answers]:
+                score += 1
+        return render(request, 'CTF_App/test_result.html', {'score': score, 'total': total})
 
-    return render(request, 'CTF_App/delete_section.html', {'section': section})
+    return render(request, 'CTF_App/take_test.html', {'article': article, 'questions': questions})
+
+
+@login_required
+def edit_test(request, article_id):
+    article = get_object_or_404(Articles, id=article_id)
+    test, created = Test.objects.get_or_create(id=article.test.id if article.test else None)
+
+    QuestionInTestFormSet = inlineformset_factory(Test, QuestionInTest, fields=('question',), extra=1, can_delete=True)
+
+    if request.method == 'POST':
+        formset = QuestionInTestFormSet(request.POST, instance=test)
+        if formset.is_valid():
+            formset.save()
+            return redirect('CTF_App:article_detail', article_id=article_id)
+    else:
+        formset = QuestionInTestFormSet(instance=test)
+
+    return render(request, 'CTF_App/edit_test.html', {
+        'article': article,
+        'formset': formset,
+    })

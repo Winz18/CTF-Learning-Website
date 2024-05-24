@@ -1,0 +1,32 @@
+{% extends "CTF_App/base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Edit Test for {{ article.name }}</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ question_formset.management_form }}
+        {% for form in question_formset %}
+        <div class="card mb-3">
+            <div class="card-header">
+                {{ form.content }}
+            </div>
+            <div class="card-body">
+                {% for answer_formset in answer_formsets %}
+                {% if answer_formset.prefix == form.prefix %}
+                {{ answer_formset.management_form }}
+                {% for answer_form in answer_formset %}
+                <div class="form-group">
+                    {{ answer_form.content.label_tag }} {{ answer_form.content }}
+                    {{ answer_form.result }}
+                </div>
+                {% endfor %}
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+        <button type="submit" class="btn btn-primary">Save changes</button>
+    </form>
+</div>
+{% endblock %}

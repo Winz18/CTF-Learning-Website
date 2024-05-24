@@ -27,6 +27,8 @@ INSTALLED_APPS = [
     'debug_toolbar',
     'CTF_App.apps.CtfAppConfig',
     'crispy_forms',
+    'ckeditor',
+    'ckeditor_uploader',
 ]
 
 MIDDLEWARE = [
@@ -123,3 +125,15 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+CKEDITOR_UPLOAD_PATH = "/uploads/"
+CKEDITOR_CONFIGS = {
+    'default': {
+        'toolbar': 'full',
+        'height': 300,
+        'width': '100%',
+        'extraPlugins': ','.join([
+            'codesnippet',
+        ]),
+    },
+}

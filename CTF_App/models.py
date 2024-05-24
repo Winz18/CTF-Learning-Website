@@ -1,10 +1,11 @@
 import uuid
 from django.db import models
 from django.contrib.auth.models import User
+import bleach
 
 
 class Test(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    models.AutoField(primary_key=True)
     difficulty = models.CharField(max_length=50)
 
 
@@ -40,6 +41,12 @@ class Sections(models.Model):
     def __str__(self):
         return f"{self.article.name} - {self.part_type} - {self.position}"
 
+    def save(self, *args, **kwargs):
+        if self.text:
+            self.text = bleach.clean(self.text, tags=['b', 'i', 'u', 'em', 'strong', 'a', 'ul', 'ol', 'li', 'br'],
+                                     attributes={'a': ['href']})
+        super().save(*args, **kwargs)
+
     class Meta:
         ordering = ['position']
 
@@ -51,24 +58,24 @@ class AuthorOfArticle(models.Model):
 
 
 class Question(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    id = models.AutoField(primary_key=True)
     content = models.TextField()
 
 
 class QuestionInTest(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    id = models.AutoField(primary_key=True)
     test = models.ForeignKey(Test, on_delete=models.CASCADE)
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
 
 
 class Answer(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    id = models.AutoField(primary_key=True)
     content = models.TextField()
     result = models.BooleanField()
 
 
-class AnswerOfQuestion(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+class Answer_Question(models.Model):
+    id = models.AutoField(primary_key=True)
     answer = models.ForeignKey(Answer, on_delete=models.CASCADE)
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
 

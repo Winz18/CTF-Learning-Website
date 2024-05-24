@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    {% load static %}
+    <title>CTF Learning - Home</title>
+    <link href="{% static 'static/Media/Logo.jpg' %}" rel="icon">
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+          rel="stylesheet"/>
+    <link href="{% static 'static/css/style.css' %}" rel="stylesheet">
+    <style>
+        body {
+            background-color: #121212; /* Màu đen */
+            color: #fff; /* Màu chữ trắng */
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="{% url 'CTF_App:index' %}">
+            <img alt="logo" class="d-inline-block align-text-top" height="30" id="logo"
+                 src="{% static 'static/Media/Logo.jpg' %}" width="30">
+            CTF Learning
+        </a>
+        <button aria-controls="navbarTogglerDemo02" aria-expanded="false" aria-label="Toggle navigation"
+                class="navbar-toggler"
+                data-bs-target="#navbarTogglerDemo02" data-bs-toggle="collapse" type="button">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarTogglerDemo02">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a aria-current="page" class="nav-link active" href="{% url 'CTF_App:index' %}"
+                       style="color: white">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'CTF_App:article_create' %}" style="color: white">Contribute_article</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'CTF_App:scoreboard' %}" style="color: white">Scoreboard</a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a aria-expanded="false" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#"
+                       id="navbarDropdown" role="button" style="color: white">
+                        Categories
+                    </a>
+                    <ul aria-labelledby="navbarDropdown" class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{% url 'CTF_App:index' %}?category=Web Security">Web
+                            Security</a></li>
+                        <li><a class="dropdown-item" href="{% url 'CTF_App:index' %}?category=Forensics">Forensics</a>
+                        </li>
+                        <li><a class="dropdown-item"
+                               href="{% url 'CTF_App:index' %}?category=Cryptography">Cryptography</a></li>
+                        <li><a class="dropdown-item" href="{% url 'CTF_App:index' %}?category=Binary Exploitation">Binary
+                            Exploitation</a></li>
+                        <li><a class="dropdown-item" href="{% url 'CTF_App:index' %}?category=Reverse Engineering">Reverse
+                            Engineering</a></li>
+                    </ul>
+                </li>
+            </ul>
+            {% if user.is_authenticated %}
+            <a class="btn btn-danger" href="{% url 'CTF_App:logout' %}">Logout</a>
+            <span style="margin-right: 30px;"></span>
+            <a class="btn btn-primary" href="{% url 'CTF_App:profile' %}">Profile</a>
+            {% endif %}
+            {% if not user.is_authenticated %}
+            <a class="btn btn-success" href="{% url 'CTF_App:login' %}">Login</a>
+            <span style="margin-right: 30px;"></span>
+            <a class="btn btn-primary" href="{% url 'CTF_App:signup' %}">Signup</a>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    {% block content %}
+
+    {% endblock %}
+</div>
+
+</body>
+</html>

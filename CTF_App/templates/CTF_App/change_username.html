@@ -1,92 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    {% load static %}
-    <title>CTF Learning - Change Username</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: #121212;
-            color: white;
-        }
+{% extends "CTF_App/base.html" %}
 
-        .form-container {
-            background: #1f1f1f;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-            max-width: 500px;
-            margin: 50px auto;
-            font-size: 1.2em;
-        }
-
-        .form-container h2 {
-            margin-bottom: 20px;
-            color: #007bff;
-        }
-
-        .btn-primary {
-            background-color: #007bff;
-            border: none;
-        }
-
-        .btn-primary:hover {
-            background-color: #0056b3;
-        }
-    </style>
-</head>
-<body>
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="{% url 'CTF_App:index' %}">
-            <img src="{% static 'static/Media/Logo.jpg' %}" alt="logo" width="30" height="30"
-                 class="d-inline-block align-text-top" id="logo">
-            CTF Learning
-        </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarTogglerDemo02"
-                aria-controls="navbarTogglerDemo02" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarTogglerDemo02">
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item">
-                    <a class="nav-link active" aria-current="page" href="{% url 'CTF_App:index' %}"
-                       style="color: white">Home</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'CTF_App:article_create' %}" style="color: white">Contribute_article</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'CTF_App:scoreboard' %}" style="color: white">Scoreboard</a>
-                </li>
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
-                       data-bs-toggle="dropdown" aria-expanded="false" style="color: white">
-                        Categories
-                    </a>
-                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                        <li><a class="dropdown-item" href="{% url 'CTF_App:index' %}?category=Web Security">Web Security</a></li>
-                        <li><a class="dropdown-item" href="{% url 'CTF_App:index' %}?category=Forensics">Forensics</a></li>
-                        <li><a class="dropdown-item" href="{% url 'CTF_App:index' %}?category=Cryptography">Cryptography</a></li>
-                        <li><a class="dropdown-item" href="{% url 'CTF_App:index' %}?category=Binary Exploitation">Binary Exploitation</a></li>
-                        <li><a class="dropdown-item" href="{% url 'CTF_App:index' %}?category=Reverse Engineering">Reverse Engineering</a></li>
-                    </ul>
-                </li>
-            </ul>
-            {% if user.is_authenticated %}
-            <a class="btn btn-danger" href="{% url 'CTF_App:logout' %}">Logout</a>
-            <span style="margin-right: 30px;"></span>
-            <a class="btn btn-primary" href="{% url 'CTF_App:profile' %}">Profile</a>
-            {% endif %}
-            {% if not user.is_authenticated %}
-            <a class="btn btn-success" href="{% url 'CTF_App:login' %}">Login</a>
-            <span style="margin-right: 30px;"></span>
-            <a class="btn btn-primary" href="{% url 'CTF_App:signup' %}">Signup</a>
-            {% endif %}
-        </div>
-    </div>
-</nav>
+{% block content %}
 <div class="form-container">
+    <h1></h1>
     <h2>Change Username</h2>
     <form method="post">
         {% csrf_token %}
@@ -94,5 +10,4 @@
         <button type="submit" class="btn btn-primary btn-block">Change Username</button>
     </form>
 </div>
-</body>
-</html>
+{% endblock %}

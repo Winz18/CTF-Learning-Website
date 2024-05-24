@@ -1,0 +1,22 @@
+{% extends "CTF_App/base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>{{ article.name }} - Test</h2>
+    <form method="post">
+        {% csrf_token %}
+        {% for question in questions %}
+        <div class="mb-4">
+            <h4>{{ question.content }}</h4>
+            {% for answer in question.answer_set.all %}
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="question_{{ question.id }}" value="{{ answer.id }}">
+                <label class="form-check-label">{{ answer.content }}</label>
+            </div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+</div>
+{% endblock %}

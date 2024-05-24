@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, include
 from . import views
 
 app_name = 'CTF_App'
@@ -37,12 +37,17 @@ urlpatterns = [
     # URL pattern cho trang tạo bài viết
     path('articles/new/', views.ArticleCreateView.as_view(), name='article_create'),
 
-    # URL pattern cho trang sửa bài viết
+    # URL pattern cho trang thêm section
     path('articles/<uuid:article_id>/add_section/', views.add_section, name='add_section'),
 
-    # URL pattern cho trang sửa bài viết
+    # URL pattern cho trang chỉnh sửa bài viết
     path('section/edit/<uuid:section_id>/', views.edit_section, name='edit_section'),
     path('section/delete/<uuid:section_id>/', views.delete_section, name='delete_section'),
     path('article/<uuid:article_id>/add_section/', views.add_section, name='add_section'),
     path('article/<uuid:article_id>/add_section/<int:position>/', views.add_section, name='add_section'),
+    path('ckeditor/', include('ckeditor_uploader.urls')),
+
+    # URL pattern cho trang làm bài test
+    path('article/<uuid:article_id>/test/', views.take_test, name='take_test'),
+    path('article/<uuid:article_id>/edit_test/', views.edit_test, name='edit_test'),
 ]
