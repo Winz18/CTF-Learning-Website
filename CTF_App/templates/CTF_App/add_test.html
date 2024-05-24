@@ -1,0 +1,51 @@
+{% extends "CTF_App/base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card bg-dark text-light">
+                <div class="card-header">
+                    <h2>Add Test to {{ article.name }}</h2>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="difficulty">Test Difficulty</label>
+                            <input type="text" class="form-control" id="difficulty" name="difficulty" required>
+                        </div>
+                        {{ question_form.as_p }}
+                        <h4>Answers</h4>
+                        {{ formset.management_form }}
+                        <div id="answers">
+                            {% for form in formset %}
+                            <div class="form-group">
+                                {{ form.as_p }}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <br><br>
+                        <button type="submit" class="btn btn-primary">Add Test</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('add-answer').addEventListener('click', function() {
+    const answerIndex = document.querySelectorAll('#answers .form-group').length + 1;
+    const newAnswerDiv = document.createElement('div');
+    newAnswerDiv.classList.add('form-group');
+    newAnswerDiv.innerHTML = `
+        <label for="answer_${answerIndex}_content">Answer ${answerIndex}</label>
+        <input type="text" class="form-control" id="answer_${answerIndex}_content" name="form-${answerIndex}-content" required>
+        <label for="answer_${answerIndex}_result">Is Correct</label>
+        <input type="checkbox" id="answer_${answerIndex}_result" name="form-${answerIndex}-result">
+    `;
+    document.getElementById('answers').appendChild(newAnswerDiv);
+});
+</script>
+{% endblock %}

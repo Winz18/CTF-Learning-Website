@@ -72,12 +72,7 @@ class Answer(models.Model):
     id = models.AutoField(primary_key=True)
     content = models.TextField()
     result = models.BooleanField()
-
-
-class Answer_Question(models.Model):
-    id = models.AutoField(primary_key=True)
-    answer = models.ForeignKey(Answer, on_delete=models.CASCADE)
-    question = models.ForeignKey(Question, on_delete=models.CASCADE)
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, default='')
 
 
 class CustomUser(models.Model):

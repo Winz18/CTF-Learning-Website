@@ -1,22 +1,80 @@
 {% extends "CTF_App/base.html" %}
 
+{% block extra_css %}
+<style>
+    body {
+        background-color: #121212;
+        color: #ffffff;
+    }
+
+    .card {
+        border-color: #333;
+    }
+
+    .card-title {
+        margin-bottom: 15px;
+    }
+
+    .form-check {
+        margin-bottom: 10px;
+    }
+
+    .form-check-input {
+        border-color: #666;
+    }
+
+    .form-check-input:checked {
+        background-color: #007bff;
+        border-color: #007bff;
+    }
+
+    .form-check-label {
+        color: #ffffff;
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        border-color: #007bff;
+    }
+
+    .btn-primary:hover {
+        background-color: #0056b3;
+        border-color: #004085;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container mt-5">
-    <h2>{{ article.name }} - Test</h2>
-    <form method="post">
-        {% csrf_token %}
-        {% for question in questions %}
-        <div class="mb-4">
-            <h4>{{ question.content }}</h4>
-            {% for answer in question.answer_set.all %}
-            <div class="form-check">
-                <input class="form-check-input" type="radio" name="question_{{ question.id }}" value="{{ answer.id }}">
-                <label class="form-check-label">{{ answer.content }}</label>
+    <div class="text-center">
+        <h2 class="text-white">{{ article.name }} - Test</h2>
+    </div>
+    <div class="col-md-8 offset-md-2">
+        <form class="mt-5" method="post">
+            {% csrf_token %}
+            {% for question_data in questions_in_test %}
+            <div class="card mb-3 bg-dark text-white">
+                <div class="card-body">
+                    <h5 class="card-title">{{ forloop.counter }}. {{ question_data.question.content }}</h5>
+                    <div class="answers">
+                        {% for answer in question_data.question.answer_set.all %}
+                        <div class="form-check">
+                            <input class="form-check-input" id="answer_{{ answer.id }}"
+                                   name="question_{{ question_data.question.id }}"
+                                   type="radio" value="{{ answer.id }}">
+                            <label class="form-check-label" for="answer_{{ answer.id }}">{{ answer.content }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
             </div>
             {% endfor %}
-        </div>
-        {% endfor %}
-        <button type="submit" class="btn btn-primary">Submit</button>
-    </form>
+            <div class="text-center">
+                <button class="btn btn-primary" type="submit">Submit</button>
+            </div>
+        </form>
+    </div>
 </div>
 {% endblock %}
+
+

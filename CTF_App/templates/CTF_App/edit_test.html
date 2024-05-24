@@ -5,28 +5,35 @@
     <h2>Edit Test for {{ article.name }}</h2>
     <form method="post">
         {% csrf_token %}
-        {{ question_formset.management_form }}
-        {% for form in question_formset %}
-        <div class="card mb-3">
-            <div class="card-header">
-                {{ form.content }}
-            </div>
-            <div class="card-body">
-                {% for answer_formset in answer_formsets %}
-                {% if answer_formset.prefix == form.prefix %}
-                {{ answer_formset.management_form }}
-                {% for answer_form in answer_formset %}
-                <div class="form-group">
-                    {{ answer_form.content.label_tag }} {{ answer_form.content }}
-                    {{ answer_form.result }}
+        {{ formset.management_form }}
+
+        <div class="questions">
+            {% for form, answer_formset in formset_with_answers %}
+            <div class="card mb-3 bg-dark text-light">
+                <div class="card-body">
+                    {{ form.as_p }}
+
+                    <div class="answers">
+                        <h5>Answers:</h5>
+                        {% if answer_formset %}
+                            {{ answer_formset.management_form }}
+                            {% for af in answer_formset %}
+                            <div class="form-group">
+                                {{ af.as_p }}
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <p>Please save the question before adding answers.</p>
+                        {% endif %}
+                    </div>
                 </div>
-                {% endfor %}
-                {% endif %}
-                {% endfor %}
             </div>
+            {% endfor %}
         </div>
-        {% endfor %}
-        <button type="submit" class="btn btn-primary">Save changes</button>
+
+        <div class="text-center">
+            <button type="submit" class="btn btn-primary">Save</button>
+        </div>
     </form>
 </div>
 {% endblock %}

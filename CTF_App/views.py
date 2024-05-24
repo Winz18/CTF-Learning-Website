@@ -6,6 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.db.models import F
+from django.forms import inlineformset_factory, modelformset_factory
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render, redirect
@@ -13,8 +14,8 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views import generic
 from django.views.decorators.csrf import csrf_exempt
-from .models import Articles, Sections, Test, QuestionInTest, Question, Answer, Answer_Question, CustomUser
-from django.forms import inlineformset_factory
+
+from .models import Articles, Sections, Test, QuestionInTest, Question, Answer, CustomUser
 
 
 class IndexView(generic.ListView):
@@ -308,32 +309,86 @@ def take_test(request, article_id):
     if request.method == 'POST':
         score = 0
         total = len(questions)
-        for question in questions:
-            correct_answers = Answer_Question.objects.filter(question=question, answer__result=True)
+        for question_data in questions_in_test:
+            question = question_data.question
+            correct_answers = Answer.objects.filter(question=question, result=True)
             selected_answer_id = request.POST.get(f'question_{question.id}')
-            if selected_answer_id and int(selected_answer_id) in [ca.answer.id for ca in correct_answers]:
+            if selected_answer_id and int(selected_answer_id) in [ca.id for ca in correct_answers]:
                 score += 1
         return render(request, 'CTF_App/test_result.html', {'score': score, 'total': total})
 
-    return render(request, 'CTF_App/take_test.html', {'article': article, 'questions': questions})
+    return render(request, 'CTF_App/take_test.html', {'article': article, 'questions_in_test': questions_in_test})
 
 
 @login_required
 def edit_test(request, article_id):
     article = get_object_or_404(Articles, id=article_id)
     test, created = Test.objects.get_or_create(id=article.test.id if article.test else None)
-
-    QuestionInTestFormSet = inlineformset_factory(Test, QuestionInTest, fields=('question',), extra=1, can_delete=True)
+    QuestionInTestFormSet = inlineformset_factory(Test, QuestionInTest, fields=('question',), extra=1,
+                                                  can_delete=True)
+    AnswerFormSet = inlineformset_factory(Question, Answer, fields=('content', 'result'), extra=1, can_delete=True)
 
     if request.method == 'POST':
         formset = QuestionInTestFormSet(request.POST, instance=test)
         if formset.is_valid():
             formset.save()
-            return redirect('CTF_App:article_detail', article_id=article_id)
+
+            for form in formset:
+                if form.instance.pk and form.instance.question:
+                    question = form.instance.question
+                    answer_formset = AnswerFormSet(request.POST, instance=question, prefix=f'answer_{question.id}')
+                    if answer_formset.is_valid():
+                        answer_formset.save()
+            return redirect('CTF_App:article_detail', pk=article_id)
     else:
         formset = QuestionInTestFormSet(instance=test)
+        formset_with_answers = []
+        for form in formset:
+            if form.instance.pk and form.instance.question:
+                question = form.instance.question
+                answer_formset = AnswerFormSet(instance=question, prefix=f'answer_{question.id}')
+                formset_with_answers.append((form, answer_formset))
+            else:
+                formset_with_answers.append((form, None))
 
     return render(request, 'CTF_App/edit_test.html', {
         'article': article,
+        'formset': formset,
+        'formset_with_answers': formset_with_answers,
+    })
+
+
+@login_required
+def add_test(request, article_id):
+    article = get_object_or_404(Articles, id=article_id)
+
+    if request.method == 'POST':
+        test = Test.objects.create(difficulty=request.POST.get('difficulty', ''))
+        article.test = test
+        article.save()
+
+        question_form = QuestionForm(request.POST)
+        if question_form.is_valid():
+            question = question_form.save(commit=False)
+            question.save()
+
+            answer_formset = modelformset_factory(Answer, form=AnswerForm, extra=2)
+            formset = answer_formset(request.POST, queryset=Answer.objects.none())
+
+            if formset.is_valid():
+                for form in formset:
+                    answer = form.save(commit=False)
+                    answer.question = question
+                    answer.save()
+
+        return redirect('CTF_App:article_detail', pk=article_id)
+
+    question_form = QuestionForm()
+    answer_formset = modelformset_factory(Answer, form=AnswerForm, extra=2)
+    formset = answer_formset(queryset=Answer.objects.none())
+
+    return render(request, 'CTF_App/add_test.html', {
+        'article': article,
+        'question_form': question_form,
         'formset': formset,
     })

@@ -50,4 +50,5 @@ urlpatterns = [
     # URL pattern cho trang làm bài test
     path('article/<uuid:article_id>/test/', views.take_test, name='take_test'),
     path('article/<uuid:article_id>/edit_test/', views.edit_test, name='edit_test'),
+    path('article/<uuid:article_id>/add_test/', views.add_test, name='add_test'),
 ]

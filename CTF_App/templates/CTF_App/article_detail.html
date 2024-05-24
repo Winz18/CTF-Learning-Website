@@ -15,6 +15,13 @@
     .content pre {
         white-space: pre-wrap; /* Giữ lại khoảng trắng và xuống dòng */
     }
+
+    .btn-group {
+        margin-top: 20px;
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+    }
 </style>
 {% endblock %}
 
@@ -53,13 +60,15 @@
                         {% endif %}
                         {% endfor %}
                     </div>
-                    {% if user.is_authenticated and user == article.author %}
-                    <a class="btn btn-primary" href="{% url 'CTF_App:add_section' article.id %}">Add here</a>
-                    <span style="margin-right: 30px;"></span>
-                    <a class="btn btn-primary" href="{% url 'CTF_App:edit_test' article.id %}">Edit test</a>
-                    {% else %}
-                    <a class="btn btn-primary" href="{% url 'CTF_App:take_test' article.id %}">Take test</a>
-                    {% endif %}
+                    <div class="btn-group">
+                        {% if user.is_authenticated and user == article.author %}
+                        <a class="btn btn-primary" href="{% url 'CTF_App:add_section' article.id %}">Add Section</a>
+                        <a class="btn btn-primary" href="{% url 'CTF_App:edit_test' article.id %}">Edit Test</a>
+                        <a class="btn btn-primary" href="{% url 'CTF_App:add_test' article.id %}">Add Test</a>
+                        {% else %}
+                        <a class="btn btn-primary" href="{% url 'CTF_App:take_test' article.id %}">Start Quiz</a>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
