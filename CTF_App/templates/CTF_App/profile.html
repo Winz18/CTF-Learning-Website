@@ -27,9 +27,8 @@
     }
 
     .avatar {
-        display: block;
-        margin: auto;
-        border-radius: calc(50% - 1px);
+        border: 2px solid gold;
+        border-radius: 25px;
     }
 
     .btn-container {
@@ -43,7 +42,7 @@
 {% load static %}
 <link href="{% static 'static/media/default.jpg' %}">
 <div class="profile-form">
-    <h2>User Profile</h2>
+    <h2 class="text-center">User Profile</h2>
     <table class="table table-dark table-striped">
         <tr>
             <img class="avatar" src="{{ avatar }}" alt="Avatar" width="200">

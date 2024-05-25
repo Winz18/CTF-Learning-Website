@@ -64,7 +64,7 @@ class IndexView(generic.ListView):
 
         context['latest_article_list'] = articles
         context['search_query'] = search_query
-        context['page_obj'] = articles  # Added for built-in pagination support
+        context['page_obj'] = articles
 
         return context
 

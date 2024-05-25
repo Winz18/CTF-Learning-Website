@@ -42,7 +42,12 @@
                     <h2>{{ article.name }}</h2>
                 </div>
                 <div class="card-body">
-                    <img alt="Author's avatar" src="{{ avatar }}" style="border-radius: calc(50% - 1px)" width="100">
+                    <img alt="Author's avatar"
+                         src="{{ avatar }}"
+                         style="border: 2px solid gold; border-radius: 25px;"
+                         width="100">
+                    <br>
+                    <br>
                     <p class="mb-4"><strong class="text-info">Author:</strong> {{ article.author }}</p>
                     <p class="mb-4"><strong class="text-info">Date:</strong> {{ article.date }}</p>
                     <hr class="bg-light mb-4">
@@ -63,8 +68,7 @@
                         <span style="margin-right: 30px;"></span>
                         <a class="btn btn-primary" href="{% url 'CTF_App:add_section' article.id section.position %}">Add
                             above</a>
-                        <p class="mb-4"><strong class="text-info"></strong>------------------------------------------------------------------------------------------------------------------------
-                        </p>
+                        <hr>
                         {% endif %}
                         {% endfor %}
                     </div>
@@ -84,7 +88,7 @@
                         <h3>Comments</h3>
                         {% for comment in comments %}
                         <div class="comment">
-                            <p><strong class="text-info">{{ comment.user.username }} ({{ comment.created_at }}):</strong> {{ comment.text }}</p>
+                            <p> <p class="text-info">{{ comment.user.username }} ({{ comment.created_at }}) :</p>{{ comment.text }}</p>
                         </div>
                         {% endfor %}
                     </div>
@@ -94,7 +98,7 @@
                         <form method="post">
                             {% csrf_token %}
                             {{ comment_form.as_p }}
-                            <button type="submit" class="btn btn-primary">
+                            <button class="btn btn-primary" type="submit">
                                 Submit
                             </button>
                         </form>
