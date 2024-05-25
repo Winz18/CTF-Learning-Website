@@ -14,7 +14,7 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views import generic
 from django.views.decorators.csrf import csrf_exempt
-from django.core.paginator import Paginator
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.http import JsonResponse
 from django.core import serializers
 from .models import Articles, Sections, Test, QuestionInTest, Question, Answer, CustomUser, Comment
@@ -33,7 +33,6 @@ class IndexView(generic.ListView):
     paginate_by = 5
 
     def get_queryset(self):
-        # Lấy chủ đề cần lọc từ request.GET
         category = self.request.GET.get('category')
         search_query = self.request.GET.get('search')
 
@@ -49,7 +48,24 @@ class IndexView(generic.ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['search_query'] = self.request.GET.get('search', '')
+        search_query = self.request.GET.get('search', '')
+
+        # Pagination
+        queryset = self.get_queryset()
+        paginator = Paginator(queryset, self.paginate_by)
+        page = self.request.GET.get('page')
+
+        try:
+            articles = paginator.page(page)
+        except PageNotAnInteger:
+            articles = paginator.page(1)
+        except EmptyPage:
+            articles = paginator.page(paginator.num_pages)
+
+        context['latest_article_list'] = articles
+        context['search_query'] = search_query
+        context['page_obj'] = articles  # Added for built-in pagination support
+
         return context
 
 

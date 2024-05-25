@@ -13,30 +13,50 @@
         background-color: #fff;
         border-radius: 25px;
     }
+
+    .pagination {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+    }
+
+    .step-links {
+        display: flex;
+        gap: 10px;
+    }
+
+    .step-links a, .step-links span {
+        padding: 8px 16px;
+        background: #343a40;
+        color: #fff;
+        text-decoration: none;
+        border-radius: 4px;
+    }
+
+    .step-links a:hover {
+        background: #495057;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<!--Search bar-->
+<!-- Search bar -->
 <div class="search-form mt-3">
     <form action="{% url 'CTF_App:index' %}" method="GET">
         {% csrf_token %}
         <div class="input-group mb-3 search-group">
             <span class="material-symbols-outlined input-group-text">search</span>
-            <input class="form-control search-input" name="search" placeholder="Search for articles" type="text"
-                   value="{{ search_query }}">
+            <input class="form-control search-input" name="search" placeholder="Search for articles" type="text" value="{{ search_query }}">
             <button class="btn btn-success" type="submit">Search</button>
         </div>
     </form>
 </div>
-<!--End of search bar-->
+<!-- End of search bar -->
 
 <div class="container" style="color: #fff;">
     <div class="row">
         <div class="col text-center">
-            <h2>
-                Recent Posts
-            </h2>
+            <h2>Recent Posts</h2>
         </div>
     </div>
     <div class="row">
@@ -46,18 +66,33 @@
                 <div class="card-body">
                     <h5 class="card-title">
                         <a href="{% url 'CTF_App:article_detail' article.id %}" style="color: goldenrod;">
-                            {{ article.name }}</a>
-                        <br>
-                        <br>
-                        <h6 style="color: cadetblue;">Author: {{ article.author }} </h6>
-                        <h6 style="color: cadetblue;">Views: {{ article.date }} </h6>
-                        <h6 style="color: cadetblue;">Views: {{ article.total_views }} </h6>
+                            {{ article.name }}
+                        </a>
                     </h5>
+                    <h6 style="color: cadetblue;">Author: {{ article.author }}</h6>
+                    <h6 style="color: cadetblue;">Date: {{ article.date }}</h6>
+                    <h6 style="color: cadetblue;">Views: {{ article.total_views }}</h6>
                 </div>
             </div>
             {% endfor %}
+            <div class="pagination">
+                <span class="step-links">
+                    {% if latest_article_list.has_previous %}
+                        <a href="?page=1">&laquo; first</a>
+                        <a href="?page={{ latest_article_list.previous_page_number }}">previous</a>
+                    {% endif %}
+
+                    <span class="current">
+                        Page {{ latest_article_list.number }} of {{ latest_article_list.paginator.num_pages }}.
+                    </span>
+
+                    {% if latest_article_list.has_next %}
+                        <a href="?page={{ latest_article_list.next_page_number }}">next</a>
+                        <a href="?page={{ latest_article_list.paginator.num_pages }}">last &raquo;</a>
+                    {% endif %}
+                </span>
+            </div>
         </div>
     </div>
 </div>
 {% endblock %}
-
