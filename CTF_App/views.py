@@ -14,14 +14,23 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views import generic
 from django.views.decorators.csrf import csrf_exempt
+from django.core.paginator import Paginator
+from django.http import JsonResponse
+from django.core import serializers
+from .models import Articles, Sections, Test, QuestionInTest, Question, Answer, CustomUser, Comment
 
-from .models import Articles, Sections, Test, QuestionInTest, Question, Answer, CustomUser
+
+class CommentForm(forms.ModelForm):
+    class Meta:
+        model = Comment
+        fields = ['text']
 
 
 class IndexView(generic.ListView):
     template_name = "CTF_App/index.html"
     context_object_name = "latest_article_list"
     model = Articles
+    paginate_by = 5
 
     def get_queryset(self):
         # Lấy chủ đề cần lọc từ request.GET
@@ -36,7 +45,7 @@ class IndexView(generic.ListView):
         if search_query:
             queryset = queryset.filter(name__icontains=search_query)
 
-        return queryset.order_by('-date')[:5]
+        return queryset.order_by('-date')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -51,8 +60,27 @@ class DetailView(generic.DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['sections'] = self.get_object().sections.order_by('position')
+        context['sections'] = self.object.sections.order_by('position')
+        context['avatar'] = self.object.author.customuser.avatar.url
+        context['comments'] = Comment.objects.filter(article=self.object)
+        context['comment_form'] = CommentForm()
         return context
+
+    def get_object(self, queryset=None):
+        if not hasattr(self, '_article'):
+            self._article = super().get_object(queryset)
+            self._article.total_views += 1
+            self._article.save()
+        return self._article
+
+    def post(self, request, *args, **kwargs):
+        form = CommentForm(request.POST)
+        if form.is_valid():
+            comment = form.save(commit=False)
+            comment.user = request.user
+            comment.article = self.get_object()
+            comment.save()
+        return redirect('CTF_App:article_detail', pk=self.get_object().pk)
 
 
 class ScoreboardView(generic.ListView):
@@ -61,8 +89,10 @@ class ScoreboardView(generic.ListView):
     model = User
 
     def get_queryset(self):
-        return User.objects.annotate(score=F('customuser__score')).select_related('customuser').order_by(
-            F('customuser__score').desc(), 'date_joined')
+        return User.objects.annotate(
+            score=F('customuser__score'),
+            contribution=F('customuser__contribution')
+        ).order_by('-score', '-contribution')
 
 
 def user_login(request):
@@ -106,7 +136,8 @@ def user_signup(request):
             user=user,
             score=0,
             contribution=0,
-            rank=0
+            rank=0,
+            avatar='default.jpg'
         )
 
         # Lưu CustomUser mới vào cơ sở dữ liệu
@@ -131,11 +162,24 @@ def profile_view(request):
     rank = list(ordered_users_list).index(current_user.customuser) + 1
     context = {
         'user': current_user,
+        'avatar': CustomUser.objects.get(user=current_user).avatar.url,
         'score': CustomUser.objects.get(user=current_user).score,
         'contribution': CustomUser.objects.get(user=current_user).contribution,
         'rank': rank,
     }
     return render(request, 'CTF_App/profile.html', context)
+
+
+@login_required
+def change_avatar(request):
+    if request.method == 'POST':
+        avatar = request.FILES['avatar']
+        custom_user = CustomUser.objects.get(user=request.user)
+        custom_user.avatar.delete()
+        custom_user.avatar = avatar
+        custom_user.save()
+        return redirect('CTF_App:profile')
+    return render(request, 'CTF_App/change_avatar.html')
 
 
 class ChangeUsernameForm(forms.ModelForm):
@@ -238,7 +282,20 @@ class ArticleCreateView(generic.CreateView):
 
     def form_valid(self, form):
         form.instance.author = self.request.user
-        return super().form_valid(form)
+        valid_categories = ['Web Security', 'Cryptography', 'Reverse Engineering', 'Forensics', 'Binary Exploitation',
+                            'Misc']
+        if form.instance.category not in valid_categories:
+            form.add_error('category', 'Invalid category')
+            return self.form_invalid(form)
+
+        # Save the form first
+        response = super().form_valid(form)
+
+        # Increment the 'contribution' field of the author's CustomUser instance
+        self.request.user.customuser.contribution += 1
+        self.request.user.customuser.save()
+
+        return response
 
     def get_success_url(self):
         return reverse('CTF_App:article_detail', kwargs={'pk': self.object.pk})
@@ -294,6 +351,16 @@ def delete_section(request, section_id):
     return redirect(reverse('CTF_App:article_detail', args=[str(article_id)]))
 
 
+@login_required
+def delete_article(request, article_id):
+    article = get_object_or_404(Articles, id=article_id)
+    article.sections.all().delete()
+    article.delete()
+    article.author.customuser.contribution -= 1
+    article.author.customuser.save()
+    return redirect(reverse('CTF_App:index'))
+
+
 class QuestionForm(forms.ModelForm):
     class Meta:
         model = Question
@@ -319,6 +386,14 @@ def take_test(request, article_id):
     questions_in_test = QuestionInTest.objects.filter(test=test)
     questions = [qit.question for qit in questions_in_test]
 
+    # If the user has already taken the test, redirect them to the result page
+    if request.user.customuser.score != 0:
+        return render(request, 'CTF_App/test_result.html', {'score': request.user.customuser.score, 'total': len(questions)})
+
+    # If the article has no test, redirect them to the article detail page
+    if not questions:
+        return redirect('CTF_App:article_detail', pk=article_id)
+
     if request.method == 'POST':
         score = 0
         total = len(questions)
@@ -328,6 +403,8 @@ def take_test(request, article_id):
             selected_answer_id = request.POST.get(f'question_{question.id}')
             if selected_answer_id and int(selected_answer_id) in [ca.id for ca in correct_answers]:
                 score += 1
+            request.user.customuser.score = score
+            request.user.customuser.save()
         return render(request, 'CTF_App/test_result.html', {'score': score, 'total': total})
 
     return render(request, 'CTF_App/take_test.html', {'article': article, 'questions_in_test': questions_in_test})
@@ -352,7 +429,9 @@ def edit_test(request, article_id):
                     answer_formset = AnswerFormSet(request.POST, instance=question, prefix=f'answer_{question.id}')
                     if answer_formset.is_valid():
                         answer_formset.save()
-            return redirect('CTF_App:article_detail', pk=article_id)
+
+            messages.success(request, 'Test edited successfully')
+            return redirect('CTF_App:edit_test', article_id=article_id)
     else:
         formset = QuestionInTestFormSet(instance=test)
         formset_with_answers = []

@@ -40,13 +40,18 @@
         </div>
     </div>
     <div class="row">
-        <div class="col">
+        <div class="col-md-8 offset-md-2">
             {% for article in latest_article_list %}
             <div class="card mb-3 bg-dark">
                 <div class="card-body">
                     <h5 class="card-title">
-                        <a href="{% url 'CTF_App:article_detail' article.id %}" style="color: #fff;">
+                        <a href="{% url 'CTF_App:article_detail' article.id %}" style="color: goldenrod;">
                             {{ article.name }}</a>
+                        <br>
+                        <br>
+                        <h6 style="color: cadetblue;">Author: {{ article.author }} </h6>
+                        <h6 style="color: cadetblue;">Views: {{ article.date }} </h6>
+                        <h6 style="color: cadetblue;">Views: {{ article.total_views }} </h6>
                     </h5>
                 </div>
             </div>
@@ -55,3 +60,4 @@
     </div>
 </div>
 {% endblock %}
+

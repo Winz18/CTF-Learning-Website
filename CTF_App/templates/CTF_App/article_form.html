@@ -27,6 +27,9 @@
     <form enctype="multipart/form-data" method="post">
         {% csrf_token %}
         {{ form.as_p }}
+        <hr>
+        <h6>Valid categories: 'Web Security' | 'Cryptography' | 'Reverse Engineering' | 'Forensics' | 'Binary Exploitation' | 'Misc'</h6>
+        <hr>
         <button class="btn btn-primary" type="submit">Submit</button>
     </form>
 </div>

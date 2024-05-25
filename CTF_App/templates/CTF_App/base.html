@@ -63,6 +63,7 @@
                             Exploitation</a></li>
                         <li><a class="dropdown-item" href="{% url 'CTF_App:index' %}?category=Reverse Engineering">Reverse
                             Engineering</a></li>
+                        <li><a class="dropdown-item" href="{% url 'CTF_App:index' %}?category=Misc">Misc</a></li>
                     </ul>
                 </li>
             </ul>
@@ -84,7 +85,10 @@
     {% block content %}
 
     {% endblock %}
-</div>
 
+    {% block extra_js %}
+
+    {% endblock %}
+</div>
 </body>
 </html>

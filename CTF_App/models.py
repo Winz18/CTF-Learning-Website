@@ -81,3 +81,11 @@ class CustomUser(models.Model):
     score = models.FloatField(default=0)
     contribution = models.IntegerField(default=0)
     rank = models.IntegerField(default=0)
+    avatar = models.ImageField(upload_to='avatar_images/', null=True, blank=True)
+
+
+class Comment(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    article = models.ForeignKey(Articles, on_delete=models.CASCADE)
+    text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)

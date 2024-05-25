@@ -5,6 +5,7 @@
     .article-header {
         text-align: center;
         margin-bottom: 20px;
+        color: goldenrod;
     }
 
     .content img, .content video {
@@ -22,6 +23,12 @@
         justify-content: center;
         gap: 10px;
     }
+
+    .comment-form textarea {
+        width: 100%;
+        height: 100px;
+        margin-bottom: 10px;
+    }
 </style>
 {% endblock %}
 
@@ -35,6 +42,7 @@
                     <h2>{{ article.name }}</h2>
                 </div>
                 <div class="card-body">
+                    <img alt="Author's avatar" src="{{ avatar }}" style="border-radius: calc(50% - 1px)" width="100">
                     <p class="mb-4"><strong class="text-info">Author:</strong> {{ article.author }}</p>
                     <p class="mb-4"><strong class="text-info">Date:</strong> {{ article.date }}</p>
                     <hr class="bg-light mb-4">
@@ -65,13 +73,47 @@
                         <a class="btn btn-primary" href="{% url 'CTF_App:add_section' article.id %}">Add Section</a>
                         <a class="btn btn-primary" href="{% url 'CTF_App:edit_test' article.id %}">Edit Test</a>
                         <a class="btn btn-primary" href="{% url 'CTF_App:add_test' article.id %}">Add Test</a>
+                        <a class="btn btn-danger" href="{% url 'CTF_App:delete_article' article.id %}">Delete
+                            Article</a>
                         {% else %}
                         <a class="btn btn-primary" href="{% url 'CTF_App:take_test' article.id %}">Start Quiz</a>
                         {% endif %}
+                    </div>
+                    <hr>
+                    <div class="comments">
+                        <h3>Comments</h3>
+                        {% for comment in comments %}
+                        <div class="comment">
+                            <p><strong class="text-info">{{ comment.user.username }} ({{ comment.created_at }}):</strong> {{ comment.text }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <hr>
+                    <div class="comment-form">
+                        <h3>Leave a comment</h3>
+                        <form method="post">
+                            {% csrf_token %}
+                            {{ comment_form.as_p }}
+                            <button type="submit" class="btn btn-primary">
+                                Submit
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // reload the pagg and move to the previous position
+    window.onload = function () {
+        window.scrollTo(0, localStorage.getItem('scrollPosition'));
+    }
+    window.onbeforeunload = function () {
+        localStorage.setItem('scrollPosition', window.scrollY);
+    }
+</script>
 {% endblock %}

@@ -29,6 +29,7 @@
     .avatar {
         display: block;
         margin: auto;
+        border-radius: calc(50% - 1px);
     }
 
     .btn-container {
@@ -39,13 +40,15 @@
 {% endblock %}
 
 {% block content %}
-
+{% load static %}
+<link href="{% static 'static/media/default.jpg' %}">
 <div class="profile-form">
     <h2>User Profile</h2>
     <table class="table table-dark table-striped">
         <tr>
-            <img alt="Avatar" class="avatar"
-                 src="https://th.bing.com/th/id/OIP.CmiUPcWhIpBKEStyFPW2sQHaEK?rs=1&pid=ImgDetMain" width="200">
+            <img class="avatar" src="{{ avatar }}" alt="Avatar" width="200">
+        </tr>
+        <hr>
         <tr>
             <th>Username</th>
             <td>{{ user.username }}</td>
@@ -68,6 +71,8 @@
         </tr>
     </table>
     <div class="btn-container">
+        <a class="btn btn-warning" href="{% url 'CTF_App:change_avatar' %}">Change Avatar</a>
+        <span style="margin-right: 30px;"></span>
         <a class="btn btn-warning" href="{% url 'CTF_App:change_username' %}">Change Username</a>
         <span style="margin-right: 30px;"></span>
         <a class="btn btn-warning" href="{% url 'CTF_App:change_email' %}">Change Email</a>

@@ -1,0 +1,21 @@
+{% extends "CTF_App/base.html" %}
+
+{% block content %}
+<div class="container text-center">
+    <br>
+    <h2>Change Avatar</h2>
+    <br>
+    <br>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="avatar">New Avatar:</label>
+            <span style="margin-right: 30px;"></span>
+            <input type="file" id="avatar" name="avatar" accept="image/*">
+        </div>
+        <br>
+        <br>
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+</div>
+{% endblock %}

@@ -10,6 +10,7 @@
                 <th>Rank</th>
                 <th>Username</th>
                 <th>Score</th>
+                <th>Contributions</th>
                 <th>Date Joined</th>
             </tr>
             </thead>
@@ -19,6 +20,7 @@
                 <td>{{ forloop.counter }}</td>
                 <td>{{ user.username }}</td>
                 <td>{{ user.customuser.score }}</td>
+                <td>{{ user.customuser.contribution }}</td>
                 <td>{{ user.date_joined }}</td>
             </tr>
             {% endfor %}

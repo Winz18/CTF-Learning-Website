@@ -15,16 +15,6 @@
                             <label for="difficulty">Test Difficulty</label>
                             <input type="text" class="form-control" id="difficulty" name="difficulty" required>
                         </div>
-                        {{ question_form.as_p }}
-                        <h4>Answers</h4>
-                        {{ formset.management_form }}
-                        <div id="answers">
-                            {% for form in formset %}
-                            <div class="form-group">
-                                {{ form.as_p }}
-                            </div>
-                            {% endfor %}
-                        </div>
                         <br><br>
                         <button type="submit" class="btn btn-primary">Add Test</button>
                     </form>
