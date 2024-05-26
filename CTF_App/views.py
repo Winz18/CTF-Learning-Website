@@ -18,7 +18,8 @@ from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.http import JsonResponse
 from django.core import serializers
 from .models import Articles, Sections, Test, QuestionInTest, Question, Answer, CustomUser, Comment
-
+from rest_framework import viewsets
+from .serializers import ArticleSerializer, SectionSerializer, CommentSerializer, TestSerializer, QuestionSerializer, QuestionInTestSerializer, AnswerSerializer, CustomUserSerializer
 
 class CommentForm(forms.ModelForm):
     class Meta:
@@ -140,6 +141,12 @@ def user_signup(request):
         username = request.POST.get('username')
         password = request.POST.get('password')
         email = request.POST.get('email')
+
+        # Kiểm tra nếu đã có user với username hoặc email đã nhập
+        if User.objects.filter(username=username).exists() or User.objects.filter(email=email).exists():
+            # Nếu đã tồn tại user với username hoặc email đã nhập, thông báo lỗi
+            messages.error(request, 'Username or email already exists.')
+            return render(request, 'CTF_App/signup.html')
 
         # Tạo một user mới
         user = User.objects.create_user(username=username, password=password, email=email)
@@ -500,3 +507,36 @@ def add_test(request, article_id):
         'question_form': question_form,
         'formset': formset,
     })
+
+
+class ArticleViewSet(viewsets.ModelViewSet):
+    queryset = Articles.objects.all()
+    serializer_class = ArticleSerializer
+
+class SectionViewSet(viewsets.ModelViewSet):
+    queryset = Sections.objects.all()
+    serializer_class = SectionSerializer
+
+class CommentViewSet(viewsets.ModelViewSet):
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
+
+class TestViewSet(viewsets.ModelViewSet):
+    queryset = Test.objects.all()
+    serializer_class = TestSerializer
+
+class QuestionViewSet(viewsets.ModelViewSet):
+    queryset = Question.objects.all()
+    serializer_class = QuestionSerializer
+
+class QuestionInTestViewSet(viewsets.ModelViewSet):
+    queryset = QuestionInTest.objects.all()
+    serializer_class = QuestionInTestSerializer
+
+class AnswerViewSet(viewsets.ModelViewSet):
+    queryset = Answer.objects.all()
+    serializer_class = AnswerSerializer
+
+class CustomUserViewSet(viewsets.ModelViewSet):
+    queryset = CustomUser.objects.all()
+    serializer_class = CustomUserSerializer

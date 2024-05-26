@@ -13,7 +13,7 @@ SECRET_KEY = 'django-insecure-x2e!xa*n^a4ws%4hlt!%*dl&iqdk##!i*9&6#wt+!zu#b6d$*+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost']
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -29,6 +29,8 @@ INSTALLED_APPS = [
     'crispy_forms',
     'ckeditor',
     'ckeditor_uploader',
+    'rest_framework',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
@@ -40,6 +42,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'CTF-Learning-Website.urls'
@@ -137,3 +140,8 @@ CKEDITOR_CONFIGS = {
         ]),
     },
 }
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",  # React Native
+    "http://127.0.0.1:8000",  # Django
+]
