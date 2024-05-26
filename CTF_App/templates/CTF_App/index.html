@@ -3,7 +3,7 @@
 {% block extra_css %}
 <style>
     .search-group {
-        width: 100%;
+        width: 70%;
         max-width: 900px;
         margin: auto;
     }
@@ -25,7 +25,8 @@
         gap: 10px;
     }
 
-    .step-links a, .step-links span {
+    .step-links a,
+    .step-links span {
         padding: 8px 16px;
         background: #343a40;
         color: #fff;
@@ -35,6 +36,28 @@
 
     .step-links a:hover {
         background: #495057;
+    }
+
+    .categories-section {
+        margin-top: 20px;
+        max-width: 200px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .categories-section select {
+        width: 100%;
+        background-color: #343a40;
+        color: #fff;
+        border: 1px solid #495057;
+        border-radius: 5px;
+        padding: 5px 10px;
+    }
+
+    .categories-section select:focus {
+        border-color: #66afe9;
+        outline: 0;
+        box-shadow: 0 0 10px rgba(102, 175, 233, 0.6);
     }
 </style>
 {% endblock %}
@@ -50,8 +73,24 @@
             <button class="btn btn-success" type="submit">Search</button>
         </div>
     </form>
+
+    <div class="categories-section">
+    <select class="form-select" aria-label="Categories" onchange="location = this.value;">
+        <option value="{% url 'CTF_App:index' %}" {% if not request.GET.category %}selected{% endif %}>All</option>
+        <option value="{% url 'CTF_App:index' %}?category=Web Security" {% if request.GET.category == 'Web Security' %}selected{% endif %}>Web Security</option>
+        <option value="{% url 'CTF_App:index' %}?category=Forensics" {% if request.GET.category == 'Forensics' %}selected{% endif %}>Forensics</option>
+        <option value="{% url 'CTF_App:index' %}?category=Cryptography" {% if request.GET.category == 'Cryptography' %}selected{% endif %}>Cryptography</option>
+        <option value="{% url 'CTF_App:index' %}?category=Binary Exploitation" {% if request.GET.category == 'Binary Exploitation' %}selected{% endif %}>Binary Exploitation</option>
+        <option value="{% url 'CTF_App:index' %}?category=Reverse Engineering" {% if request.GET.category == 'Reverse Engineering' %}selected{% endif %}>Reverse Engineering</option>
+        <option value="{% url 'CTF_App:index' %}?category=Misc" {% if request.GET.category == 'Misc' %}selected{% endif %}>Misc</option>
+    </select>
+</div>
 </div>
 <!-- End of search bar -->
+
+<!-- Categories combobox -->
+
+<!-- End of categories combobox -->
 
 <div class="container" style="color: #fff;">
     <div class="row">

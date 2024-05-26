@@ -11,7 +11,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-x2e!xa*n^a4ws%4hlt!%*dl&iqdk##!i*9&6#wt+!zu#b6d$*+'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['localhost']
 
@@ -70,7 +70,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'ctf_learning',
         'USER': 'root',
-        'PASSWORD': 'mysql',
+        'PASSWORD': 'admin',
         'HOST': 'localhost',
     }
 }

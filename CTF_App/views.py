@@ -18,6 +18,7 @@ from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.http import JsonResponse
 from django.core import serializers
 from .models import Articles, Sections, Test, QuestionInTest, Question, Answer, CustomUser, Comment
+from django import forms
 
 
 class CommentForm(forms.ModelForm):
@@ -271,8 +272,18 @@ def change_password(request):
         form = ChangePasswordForm()
     return render(request, 'CTF_App/change_password.html', {'form': form})
 
+CATEGORY_CHOICES = [
+    ('Web Security', 'Web Security'),
+    ('Cryptography', 'Cryptography'),
+    ('Reverse Engineering', 'Reverse Engineering'),
+    ('Forensics', 'Forensics'),
+    ('Binary Exploitation', 'Binary Exploitation'),
+    ('Misc', 'Misc'),
+]
 
 class ArticleForm(forms.ModelForm):
+    category = forms.ChoiceField(choices=CATEGORY_CHOICES, label='Category')
+
     class Meta:
         model = Articles
         fields = ['name', 'category']
