@@ -520,6 +520,9 @@ def add_test(request, article_id):
     })
 
 
+#  ----------------------------- For API ----------------------------------
+
+
 class ArticleViewSet(viewsets.ModelViewSet):
     queryset = Articles.objects.all()
     serializer_class = ArticleSerializer
@@ -569,21 +572,43 @@ class RegisterSerializer(serializers.ModelSerializer):
         fields = ('username', 'email', 'password', 'password2')
 
     def validate(self, data):
+        print(data)
+
         if data['password'] != data['password2']:
             raise serializers.ValidationError("Passwords do not match.")
         try:
             validate_password(data['password'])
         except ValidationError as e:
             raise serializers.ValidationError({'password': list(e.messages)})
+
+        if User.objects.filter(username=data['username']).exists():
+            raise serializers.ValidationError(" Username or Email already exists!")
+
+        if User.objects.filter(email=data['email']).exists():
+            raise serializers.ValidationError(" Username or Email already exists!")
+
         return data
 
     def create(self, validated_data):
         user = User.objects.create(
             username=validated_data['username'],
-            email=validated_data['email']
+            email=validated_data['email'],
+            is_active=True,
+            is_staff=False,
+            is_superuser=False,
         )
         user.set_password(validated_data['password'])
         user.save()
+
+        custom_user = CustomUser.objects.create(
+            user=user,
+            score=0,
+            contribution=0,
+            rank=0,
+            avatar='default.jpg'
+        )
+        custom_user.save()
+
         return user
 
 
