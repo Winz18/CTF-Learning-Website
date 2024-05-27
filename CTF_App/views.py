@@ -5,21 +5,31 @@ from django.contrib.auth import authenticate, login, logout, update_session_auth
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
+from django.contrib.auth.password_validation import validate_password
+from django.core import serializers
+from django.core.exceptions import ValidationError
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db.models import F
 from django.forms import inlineformset_factory, modelformset_factory
+from django.http import JsonResponse
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 from django.views import generic
 from django.views.decorators.csrf import csrf_exempt
-from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
-from django.http import JsonResponse
-from django.core import serializers
-from .models import Articles, Sections, Test, QuestionInTest, Question, Answer, CustomUser, Comment
+from rest_framework import generics, permissions
+from rest_framework import serializers
+from rest_framework import status
 from rest_framework import viewsets
-from .serializers import ArticleSerializer, SectionSerializer, CommentSerializer, TestSerializer, QuestionSerializer, QuestionInTestSerializer, AnswerSerializer, CustomUserSerializer
+from rest_framework.response import Response
+
+from .models import Articles, Sections, Test, QuestionInTest, Question, Answer, CustomUser, Comment
+from .serializers import ArticleSerializer, SectionSerializer, CommentSerializer, TestSerializer, QuestionSerializer, \
+    QuestionInTestSerializer, AnswerSerializer, CustomUserSerializer
+
 
 class CommentForm(forms.ModelForm):
     class Meta:
@@ -411,7 +421,8 @@ def take_test(request, article_id):
 
     # If the user has already taken the test, redirect them to the result page
     if request.user.customuser.score != 0:
-        return render(request, 'CTF_App/test_result.html', {'score': request.user.customuser.score, 'total': len(questions)})
+        return render(request, 'CTF_App/test_result.html',
+                      {'score': request.user.customuser.score, 'total': len(questions)})
 
     # If the article has no test, redirect them to the article detail page
     if not questions:
@@ -513,30 +524,91 @@ class ArticleViewSet(viewsets.ModelViewSet):
     queryset = Articles.objects.all()
     serializer_class = ArticleSerializer
 
+
 class SectionViewSet(viewsets.ModelViewSet):
     queryset = Sections.objects.all()
     serializer_class = SectionSerializer
+
 
 class CommentViewSet(viewsets.ModelViewSet):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
 
+
 class TestViewSet(viewsets.ModelViewSet):
     queryset = Test.objects.all()
     serializer_class = TestSerializer
+
 
 class QuestionViewSet(viewsets.ModelViewSet):
     queryset = Question.objects.all()
     serializer_class = QuestionSerializer
 
+
 class QuestionInTestViewSet(viewsets.ModelViewSet):
     queryset = QuestionInTest.objects.all()
     serializer_class = QuestionInTestSerializer
+
 
 class AnswerViewSet(viewsets.ModelViewSet):
     queryset = Answer.objects.all()
     serializer_class = AnswerSerializer
 
+
 class CustomUserViewSet(viewsets.ModelViewSet):
     queryset = CustomUser.objects.all()
     serializer_class = CustomUserSerializer
+
+
+class RegisterSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
+    password2 = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = User
+        fields = ('username', 'email', 'password', 'password2')
+
+    def validate(self, data):
+        if data['password'] != data['password2']:
+            raise serializers.ValidationError("Passwords do not match.")
+        try:
+            validate_password(data['password'])
+        except ValidationError as e:
+            raise serializers.ValidationError({'password': list(e.messages)})
+        return data
+
+    def create(self, validated_data):
+        user = User.objects.create(
+            username=validated_data['username'],
+            email=validated_data['email']
+        )
+        user.set_password(validated_data['password'])
+        user.save()
+        return user
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class RegisterView(generics.CreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = RegisterSerializer
+    permission_classes = [permissions.AllowAny]
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class LoginView(generics.GenericAPIView):
+    queryset = User.objects.all()
+    permission_classes = [permissions.AllowAny]
+    serializer_class = serializers.Serializer
+
+    def post(self, request, *args, **kwargs):
+        from rest_framework.authtoken.models import Token
+        from django.contrib.auth import authenticate
+
+        username = request.data.get('username')
+        password = request.data.get('password')
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            token, _ = Token.objects.get_or_create(user=user)
+            return Response({'token': token.key, 'user_id': user.pk, 'username': user.username, 'email': user.email})
+        else:
+            return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
