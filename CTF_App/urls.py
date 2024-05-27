@@ -4,6 +4,7 @@ from . import views
 app_name = 'CTF_App'
 
 urlpatterns = [
+
     # URL pattern cho trang chủ
     path('', views.IndexView.as_view(), name='index'),
 
