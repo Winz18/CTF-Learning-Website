@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Articles, Sections, Comment, Test, Question, QuestionInTest, Answer, CustomUser
+from .models import Articles, Sections, Comment, Test, Question, QuestionInTest, Answer, CustomUser, User
 
 class ArticleSerializer(serializers.ModelSerializer):
     class Meta:
@@ -36,7 +36,13 @@ class AnswerSerializer(serializers.ModelSerializer):
         model = Answer
         fields = ['id', 'content', 'result', 'question']
 
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email']
+
 class CustomUserSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
     class Meta:
         model = CustomUser
         fields = ['id', 'user', 'score', 'contribution', 'rank', 'avatar']

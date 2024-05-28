@@ -1,7 +1,7 @@
 from CTF_App.views_api import (
     ArticleViewSet, SectionViewSet, CommentViewSet, TestViewSet,
     QuestionViewSet, QuestionInTestViewSet, AnswerViewSet, CustomUserViewSet,
-    LoginView, RegisterView
+    LoginView, RegisterView, CreatemoduleView
 )
 from django.conf import settings
 from django.conf.urls.static import static
@@ -27,4 +27,5 @@ urlpatterns = [
                   path("api/", include(router.urls)),
                   path('api/auth/register/', RegisterView.as_view(), name='register'),
                   path('api/auth/login/', LoginView.as_view(), name='login'),
+                  path('api/create-module/', CreatemoduleView.as_view(), name='create-module'),
               ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

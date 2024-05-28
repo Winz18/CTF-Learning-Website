@@ -45,11 +45,12 @@ class ArticleViewSet(viewsets.ModelViewSet):
         for article in serializer.data:
             article['author'] = User.objects.get(id=article['author']).username
         return Response(serializer.data)
+    
 
 
 class SectionViewSet(viewsets.ModelViewSet):
     serializer_class = SectionSerializer
-
+    # Add id tác giả vào data trả về
     def get_queryset(self):
         """
         Optionally restricts the returned sections,
@@ -166,3 +167,34 @@ class LoginView(generics.GenericAPIView):
             return Response({'token': token.key, 'user_id': user.pk, 'username': user.username, 'email': user.email})
         else:
             return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+
+
+
+class CreatemoduleSerializers(serializers.ModelSerializer):
+    class Meta:
+        model = Articles
+        fields = ['id','name', 'category', 'author']
+    
+    def validate(self, data):
+        print(data)
+        valid_categories = ['Web Security', 'Cryptography', 'Reverse Engineering', 'Forensics', 'Binary Exploitation',
+                            'Misc']
+        if data['category'] not in valid_categories:
+            raise serializers.ValidationError("Invalid category")
+        return data
+    def create(self, validated_data):
+        print(validated_data['author'])
+        user = User.objects.get(id=validated_data['author'].id)
+        article = Articles.objects.create(
+            name=validated_data['name'],   
+            category=validated_data['category'],
+            author=user
+        )
+        article.save()
+        return article
+
+@method_decorator(csrf_exempt, name='dispatch')
+class CreatemoduleView(generics.CreateAPIView):
+    queryset = Articles.objects.all()
+    serializer_class = CreatemoduleSerializers
+    permission_classes = [permissions.AllowAny]
