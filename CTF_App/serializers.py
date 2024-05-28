@@ -7,10 +7,10 @@ class ArticleSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'author', 'date', 'category', 'test', 'total_views']
 
 class SectionSerializer(serializers.ModelSerializer):
+    author_id = serializers.IntegerField(source='article.author.id', read_only=True)
     class Meta:
         model = Sections
-        fields = ['id', 'article', 'part_type', 'text', 'image', 'video_url', 'created_at', 'position']
-
+        fields = ['id', 'article', 'part_type', 'text', 'image', 'video_url', 'created_at', 'position', 'author_id']
 class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
