@@ -1,4 +1,5 @@
 from django.urls import path, include
+
 from . import views
 
 app_name = 'CTF_App'
@@ -50,7 +51,6 @@ urlpatterns = [
     path('article/<uuid:article_id>/add_section/', views.add_section, name='add_section'),
     path('article/<uuid:article_id>/add_section/<int:position>/', views.add_section, name='add_section'),
     path('ckeditor/', include('ckeditor_uploader.urls')),
-
 
     # URL pattern cho trang làm bài test
     path('article/<uuid:article_id>/test/', views.take_test, name='take_test'),

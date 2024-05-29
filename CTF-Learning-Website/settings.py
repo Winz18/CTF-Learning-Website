@@ -29,9 +29,7 @@ INSTALLED_APPS = [
     'crispy_forms',
     'ckeditor',
     'ckeditor_uploader',
-    'rest_framework',
     'corsheaders',
-    'rest_framework.authtoken',
 ]
 
 MIDDLEWARE = [
@@ -142,16 +140,4 @@ CKEDITOR_CONFIGS = {
     },
 }
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",  # React Native
-    "http://127.0.0.1:8000",  # Django
-]
 
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',
-    ],
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
-    ],
-}
