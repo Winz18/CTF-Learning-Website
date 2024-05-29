@@ -28,6 +28,8 @@ from rest_framework import serializers
 from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.response import Response
+from rest_framework.decorators import action
+
 
 from .models import Articles, Sections, Test, QuestionInTest, Question, Answer, CustomUser, Comment
 from .serializers import ArticleSerializer, SectionSerializer, CommentSerializer, TestSerializer, QuestionSerializer, \
@@ -91,7 +93,23 @@ class AnswerViewSet(viewsets.ModelViewSet):
 class CustomUserViewSet(viewsets.ModelViewSet):
     queryset = CustomUser.objects.all()
     serializer_class = CustomUserSerializer
+    def update_all_ranks(self):
+        """
+        Update the ranks of all users based on their score.
+        """
+        users = CustomUser.objects.all().order_by('-score')
+        for index, user in enumerate(users):
+            user.rank = index + 1  # Rank starts from 1
+            user.save()
 
+    def list(self, request, *args, **kwargs):
+        """
+        Override the list method to update ranks before returning the list of users.
+        """
+        self.update_all_ranks()  # Update ranks before listing users
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
@@ -190,7 +208,14 @@ class CreatemoduleSerializers(serializers.ModelSerializer):
             category=validated_data['category'],
             author=user
         )
+        Section = Sections.objects.create(
+            article=article,
+            part_type='text',
+            text='This is a new article. Please add more sections to it.',
+            position=1,
+        )
         article.save()
+        Section.save()
         return article
 
 @method_decorator(csrf_exempt, name='dispatch')
