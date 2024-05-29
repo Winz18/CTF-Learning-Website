@@ -27,13 +27,15 @@ from rest_framework import generics, permissions
 from rest_framework import serializers
 from rest_framework import status
 from rest_framework import viewsets
-from rest_framework.response import Response
+from rest_framework.response import Response  
 from rest_framework.decorators import action
+from rest_framework.views import APIView
+
 
 
 from .models import Articles, Sections, Test, QuestionInTest, Question, Answer, CustomUser, Comment
 from .serializers import ArticleSerializer, SectionSerializer, CommentSerializer, TestSerializer, QuestionSerializer, \
-    QuestionInTestSerializer, AnswerSerializer, CustomUserSerializer
+    QuestionInTestSerializer, AnswerSerializer, CustomUserSerializer, EmailUpdateSerializer, PasswordChangeSerializer
 
 
 class ArticleViewSet(viewsets.ModelViewSet):
@@ -110,6 +112,17 @@ class CustomUserViewSet(viewsets.ModelViewSet):
         queryset = self.get_queryset()
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+    
+    def get_queryset(self):
+        """
+        Optionally restricts the returned users,
+        by filtering against a `username` query parameter in the URL.
+        """
+        queryset = CustomUser.objects.all()
+        username = self.request.query_params.get('username', None)
+        if username is not None:
+            queryset = queryset.filter(user__username=username)
+        return queryset
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
@@ -223,3 +236,27 @@ class CreatemoduleView(generics.CreateAPIView):
     queryset = Articles.objects.all()
     serializer_class = CreatemoduleSerializers
     permission_classes = [permissions.AllowAny]
+
+class EmailUpdateView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def put(self, request, *args, **kwargs):
+        user = request.user
+        serializer = EmailUpdateSerializer(user, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'status': 'email updated'}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class PasswordChangeView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def put(self, request, *args, **kwargs):
+        serializer = PasswordChangeSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            user = request.user
+            new_password = serializer.validated_data['new_password']
+            user.set_password(new_password)
+            user.save()
+            return Response({'status': 'password updated'}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

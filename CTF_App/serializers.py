@@ -46,3 +46,25 @@ class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ['id', 'user', 'score', 'contribution', 'rank', 'avatar']
+
+
+class EmailUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['email']
+
+class PasswordChangeSerializer(serializers.Serializer):
+    old_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)
+
+    def validate_old_password(self, value):
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise serializers.ValidationError("Incorrect old password.")
+        return value
+    def validate(self, data):
+        old_password = data.get('old_password')
+        new_password = data.get('new_password')
+        if old_password == new_password:
+            raise serializers.ValidationError("New password must be different from old password.")
+        return data
