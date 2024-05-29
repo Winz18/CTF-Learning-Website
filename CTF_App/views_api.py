@@ -28,10 +28,11 @@ from rest_framework import serializers
 from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.response import Response
+from rest_framework.decorators import action
+from rest_framework.views import APIView
 
-from .models import Articles, Sections, Test, QuestionInTest, Question, Answer, CustomUser, Comment
-from .serializers import ArticleSerializer, SectionSerializer, CommentSerializer, TestSerializer, QuestionSerializer, \
-    QuestionInTestSerializer, AnswerSerializer, CustomUserSerializer
+from .models import *
+from .serializers import *
 
 
 class ArticleViewSet(viewsets.ModelViewSet):
@@ -45,11 +46,11 @@ class ArticleViewSet(viewsets.ModelViewSet):
         for article in serializer.data:
             article['author'] = User.objects.get(id=article['author']).username
         return Response(serializer.data)
-    
 
 
 class SectionViewSet(viewsets.ModelViewSet):
     serializer_class = SectionSerializer
+
     # Add id tác giả vào data trả về
     def get_queryset(self):
         """
@@ -70,7 +71,7 @@ class CommentViewSet(viewsets.ModelViewSet):
 
 class TestViewSet(viewsets.ModelViewSet):
     queryset = Test.objects.all()
-    serializer_class = TestSerializer
+    serializer_class = TestDetailSerializer
 
 
 class QuestionViewSet(viewsets.ModelViewSet):
@@ -91,6 +92,35 @@ class AnswerViewSet(viewsets.ModelViewSet):
 class CustomUserViewSet(viewsets.ModelViewSet):
     queryset = CustomUser.objects.all()
     serializer_class = CustomUserSerializer
+
+    def update_all_ranks(self):
+        """
+        Update the ranks of all users based on their score.
+        """
+        users = CustomUser.objects.all().order_by('-score')
+        for index, user in enumerate(users):
+            user.rank = index + 1  # Rank starts from 1
+            user.save()
+
+    def list(self, request, *args, **kwargs):
+        """
+        Override the list method to update ranks before returning the list of users.
+        """
+        self.update_all_ranks()  # Update ranks before listing users
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def get_queryset(self):
+        """
+        Optionally restricts the returned users,
+        by filtering against a `username` query parameter in the URL.
+        """
+        queryset = CustomUser.objects.all()
+        username = self.request.query_params.get('username', None)
+        if username is not None:
+            queryset = queryset.filter(user__username=username)
+        return queryset
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -169,12 +199,11 @@ class LoginView(generics.GenericAPIView):
             return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
 
-
 class CreatemoduleSerializers(serializers.ModelSerializer):
     class Meta:
         model = Articles
-        fields = ['id','name', 'category', 'author']
-    
+        fields = ['id', 'name', 'category', 'author']
+
     def validate(self, data):
         print(data)
         valid_categories = ['Web Security', 'Cryptography', 'Reverse Engineering', 'Forensics', 'Binary Exploitation',
@@ -182,19 +211,62 @@ class CreatemoduleSerializers(serializers.ModelSerializer):
         if data['category'] not in valid_categories:
             raise serializers.ValidationError("Invalid category")
         return data
+
     def create(self, validated_data):
         print(validated_data['author'])
         user = User.objects.get(id=validated_data['author'].id)
         article = Articles.objects.create(
-            name=validated_data['name'],   
+            name=validated_data['name'],
             category=validated_data['category'],
             author=user
         )
+        Section = Sections.objects.create(
+            article=article,
+            part_type='text',
+            text='This is a new article. Please add more sections to it.',
+            position=1,
+        )
         article.save()
+        Section.save()
         return article
+
 
 @method_decorator(csrf_exempt, name='dispatch')
 class CreatemoduleView(generics.CreateAPIView):
     queryset = Articles.objects.all()
     serializer_class = CreatemoduleSerializers
     permission_classes = [permissions.AllowAny]
+
+
+class EmailUpdateView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def put(self, request, *args, **kwargs):
+        user = request.user
+        serializer = EmailUpdateSerializer(user, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'status': 'email updated'}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PasswordChangeView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def put(self, request, *args, **kwargs):
+        serializer = PasswordChangeSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            user = request.user
+            new_password = serializer.validated_data['new_password']
+            user.set_password(new_password)
+            user.save()
+            return Response({'status': 'password updated'}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class TestDetailView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    def get(self, request, test_id):
+        test = get_object_or_404(Test, id=test_id)
+        serializer = TestDetailSerializer(test)
+        return Response(serializer.data, status=status.HTTP_200_OK)

@@ -74,7 +74,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'ctf_learning',
         'USER': 'root',
-        'PASSWORD': 'Lak@2302',
+        'PASSWORD': 'mysql',
         'HOST': 'localhost',
     }
 }
