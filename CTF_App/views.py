@@ -26,9 +26,7 @@ from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.response import Response
 
-from .models import Articles, Sections, Test, QuestionInTest, Question, Answer, CustomUser, Comment
-from .serializers import ArticleSerializer, SectionSerializer, CommentSerializer, TestSerializer, QuestionSerializer, \
-    QuestionInTestSerializer, AnswerSerializer, CustomUserSerializer
+from .models import *
 
 
 class CommentForm(forms.ModelForm):
