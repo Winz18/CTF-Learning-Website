@@ -107,6 +107,7 @@ class DetailView(generic.DetailView):
             comment.user = request.user
             comment.article = self.get_object()
             comment.save()
+            messages.info(request,"Your comment has been recorded!")
         return redirect('CTF_App:article_detail', pk=self.get_object().pk)
 
 
@@ -343,9 +344,10 @@ def add_section(request, article_id, position=None):
     if request.method == 'POST':
         form = SectionForm(request.POST, request.FILES)
         if form.is_valid():
+            vdurl = form.cleaned_data['video_url']
             new_section = form.save(commit=False)
             new_section.article = article
-
+            new_section.video_url = vdurl.replace('watch?v=', 'embed/')
             if position is not None:
                 # Update positions of other sections to make room for the new section
                 Sections.objects.filter(article=article, position__gte=position).update(position=F('position') + 1)
