@@ -27,8 +27,9 @@ from rest_framework import generics, permissions
 from rest_framework import serializers
 from rest_framework import status
 from rest_framework import viewsets
-from rest_framework.response import Response
+from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
+from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import *
@@ -186,9 +187,6 @@ class LoginView(generics.GenericAPIView):
     serializer_class = serializers.Serializer
 
     def post(self, request, *args, **kwargs):
-        from rest_framework.authtoken.models import Token
-        from django.contrib.auth import authenticate
-
         username = request.data.get('username')
         password = request.data.get('password')
         user = authenticate(request, username=username, password=password)
@@ -254,9 +252,9 @@ class PasswordChangeView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def put(self, request, *args, **kwargs):
+        user = request.user
         serializer = PasswordChangeSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
-            user = request.user
             new_password = serializer.validated_data['new_password']
             user.set_password(new_password)
             user.save()
@@ -266,7 +264,20 @@ class PasswordChangeView(APIView):
 
 class TestDetailView(APIView):
     permission_classes = [permissions.IsAuthenticated]
+
     def get(self, request, test_id):
         test = get_object_or_404(Test, id=test_id)
         serializer = TestDetailSerializer(test)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class LogoutView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        try:
+            token = Token.objects.get(user=request.user)
+            token.delete()
+            return Response({'status': 'Logged out'}, status=status.HTTP_200_OK)
+        except Token.DoesNotExist:
+            return Response({'error': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)

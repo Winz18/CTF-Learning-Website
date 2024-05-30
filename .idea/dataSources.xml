@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-    <data-source source="LOCAL" name="ctf_learning@localhost" uuid="5f93fcbb-919b-4f1e-a192-63a587fb6af2">
+    <data-source source="LOCAL" name="CTF_Learning@localhost" uuid="b46f16e7-d64f-4ab7-80cd-0348cdf520cc">
       <driver-ref>mysql.8</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>com.mysql.cj.jdbc.Driver</jdbc-driver>
-      <jdbc-url>jdbc:mysql://localhost:3306/ctf_learning</jdbc-url>
+      <jdbc-url>jdbc:mysql://localhost:3306/CTF_Learning</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
   </component>
