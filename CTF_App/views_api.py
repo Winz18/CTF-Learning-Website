@@ -28,9 +28,10 @@ from rest_framework import serializers
 from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.authtoken.models import Token
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
 
 from .models import *
 from .serializers import *
@@ -281,3 +282,29 @@ class LogoutView(APIView):
             return Response({'status': 'Logged out'}, status=status.HTTP_200_OK)
         except Token.DoesNotExist:
             return Response({'error': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def update_score(request):
+    user = request.user
+    score = request.data.get('score')
+
+    if score is None:
+        return Response({"error": "Score is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        custom_user = CustomUser.objects.get(user=user)
+        custom_user.score = F('score') + float(score)
+        custom_user.save()
+
+        # Update ranks based on new score
+        all_users = CustomUser.objects.all().order_by('-score')
+        for rank, user in enumerate(all_users, start=1):
+            user.rank = rank
+            user.save()
+
+        custom_user.refresh_from_db()  # Refresh the user object to get updated rank
+        return Response({"message": "Score and rank updated", "new_rank": custom_user.rank}, status=status.HTTP_200_OK)
+    except CustomUser.DoesNotExist:
+        return Response({"error": "User does not exist"}, status=status.HTTP_400_BAD_REQUEST)
