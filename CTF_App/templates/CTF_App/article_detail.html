@@ -36,6 +36,18 @@
 
 <div class="container mt-5">
     <div class="row">
+        <div style="align-self: center; justify-content: center; align-items: center;">
+            {% if messages %}
+            <ul class="messages" style="align-self: center; justify-content: center; align-items: center; width: 60%; margin-left: 225px">
+                {% for message in messages %}
+                <div class="alert alert-warning text-center" role="alert"
+                     style="align-self: center; justify-content: center; align-items: center; font-size: large">
+                    {{message}}
+                </div>
+                {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
         <div class="col-md-8 offset-md-2">
             <div class="card bg-dark text-light">
                 <div class="card-header article-header">
@@ -56,18 +68,24 @@
                         {% if section.part_type == 'text' %}
                         <pre>{{ section.text|safe }}</pre>
                         {% elif section.part_type == 'image' %}
-                        <img alt="Article Image" class="img-fluid mx-auto d-block" src="{{ section.image.url }}">
+                        <img alt="Article Image" class="img-fluid mx-auto d-block" width="100%" height="70%" src="{{ section.image.url }}">
                         {% elif section.part_type == 'video' %}
-                        <iframe allowfullscreen frameborder="0" height="400" src="{{ section.video_url }}"
-                                width="100%"></iframe>
+                        <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                allowfullscreen frameborder="0"
+                                height="315"
+                                referrerpolicy="strict-origin-when-cross-origin"
+                                src="{{ section.video_url }}"
+                                title="YouTube video player"
+                                width="100%">
+                        </iframe>
                         {% endif %}
+                        <br>
                         {% if user.is_authenticated and user == article.author %}
                         <a class="btn btn-warning" href="{% url 'CTF_App:edit_section' section.id %}">Edit</a>
                         <span style="margin-right: 30px;"></span>
                         <a class="btn btn-danger" href="{% url 'CTF_App:delete_section' section.id %}">Delete</a>
                         <span style="margin-right: 30px;"></span>
-                        <a class="btn btn-primary" href="{% url 'CTF_App:add_section' article.id section.position %}">Add
-                            above</a>
+                        <a class="btn btn-primary" href="{% url 'CTF_App:add_section' article.id section.position %}">Add above</a>
                         <hr>
                         {% endif %}
                         {% endfor %}
@@ -75,12 +93,16 @@
                     <div class="btn-group">
                         {% if user.is_authenticated and user == article.author %}
                         <a class="btn btn-primary" href="{% url 'CTF_App:add_section' article.id %}">Add Section</a>
-                        <a class="btn btn-primary" href="{% url 'CTF_App:edit_test' article.id %}">Edit Test</a>
-                        <a class="btn btn-primary" href="{% url 'CTF_App:add_test' article.id %}">Add Test</a>
-                        <a class="btn btn-danger" href="{% url 'CTF_App:delete_article' article.id %}">Delete
-                            Article</a>
+                        {% if article.test %}
+                        <a class="btn btn-warning" href="{% url 'CTF_App:edit_test' article.id %}">Edit Test</a>
                         {% else %}
+                        <a class="btn btn-primary" href="{% url 'CTF_App:add_test' article.id %}">Add Test</a>
+                        {% endif %}
+                        <a class="btn btn-danger" href="{% url 'CTF_App:delete_article' article.id %}">Delete Article</a>
+                        {% else %}
+                        {% if article.test and user.is_authenticated %}
                         <a class="btn btn-primary" href="{% url 'CTF_App:take_test' article.id %}">Start Quiz</a>
+                        {% endif %}
                         {% endif %}
                     </div>
                     <hr>
@@ -88,7 +110,8 @@
                         <h3>Comments</h3>
                         {% for comment in comments %}
                         <div class="comment">
-                            <p> <p class="text-info">{{ comment.user.username }} ({{ comment.created_at }}) :</p>{{ comment.text }}</p>
+                            <p class="text-info">{{ comment.user.username }} ({{ comment.created_at }}) :</p>
+                            {{comment.text }}</p>
                         </div>
                         {% endfor %}
                     </div>
@@ -98,9 +121,11 @@
                         <form method="post">
                             {% csrf_token %}
                             {{ comment_form.as_p }}
+                            {% if user.is_authenticated %}
                             <button class="btn btn-primary" type="submit">
                                 Submit
                             </button>
+                            {% endif %}
                         </form>
                     </div>
                 </div>
@@ -112,7 +137,7 @@
 
 {% block extra_js %}
 <script>
-    // reload the pagg and move to the previous position
+    // reload the page and move to the previous position
     window.onload = function () {
         window.scrollTo(0, localStorage.getItem('scrollPosition'));
     }

@@ -3,6 +3,13 @@
 {% block content %}
 <div class="container mt-5">
     <div class="row">
+        {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+            <div class="text-center">{{ message }}</div>
+            {% endfor %}
+        </ul>
+        {% endif %}
         <div class="col-md-8 offset-md-2">
             <div class="card bg-dark text-light">
                 <div class="card-header">
@@ -23,19 +30,4 @@
         </div>
     </div>
 </div>
-
-<script>
-document.getElementById('add-answer').addEventListener('click', function() {
-    const answerIndex = document.querySelectorAll('#answers .form-group').length + 1;
-    const newAnswerDiv = document.createElement('div');
-    newAnswerDiv.classList.add('form-group');
-    newAnswerDiv.innerHTML = `
-        <label for="answer_${answerIndex}_content">Answer ${answerIndex}</label>
-        <input type="text" class="form-control" id="answer_${answerIndex}_content" name="form-${answerIndex}-content" required>
-        <label for="answer_${answerIndex}_result">Is Correct</label>
-        <input type="checkbox" id="answer_${answerIndex}_result" name="form-${answerIndex}-result">
-    `;
-    document.getElementById('answers').appendChild(newAnswerDiv);
-});
-</script>
 {% endblock %}

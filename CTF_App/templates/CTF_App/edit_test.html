@@ -17,6 +17,15 @@
 {% block content %}
 <div class="container mt-5">
     <h2>Edit Test for {{ article.name }}</h2>
+    <div class="row">
+        {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+            <div class="text-center">{{ message }}</div>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </div>
     <form method="post">
         {% csrf_token %}
         {{ formset.management_form }}
@@ -36,8 +45,9 @@
                         <div class="form-group">
                             {{ af.as_p }}
                         </div>
-                        <hr>
+                        <br>
                         {% endfor %}
+                        <hr>
                         {% else %}
                         <p>Please save the question before adding answers.</p>
                         {% endif %}

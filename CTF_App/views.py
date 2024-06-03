@@ -10,20 +10,14 @@ from django.core import serializers
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db.models import F
-from django.forms import inlineformset_factory, modelformset_factory
+from django.forms import inlineformset_factory, modelformset_factory, Textarea
 from django.http import JsonResponse
-from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
-from django.shortcuts import render, redirect
+from django.shortcuts import get_object_or_404, render, redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views import generic
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.csrf import csrf_exempt
-from rest_framework import generics, permissions
-from rest_framework import serializers
-from rest_framework import status
-from rest_framework import viewsets
+from rest_framework import generics, permissions, serializers, status, viewsets
 from rest_framework.response import Response
 
 from .models import *
@@ -105,6 +99,7 @@ class DetailView(generic.DetailView):
             comment.user = request.user
             comment.article = self.get_object()
             comment.save()
+            messages.info(request, "Your comment has been recorded!")
         return redirect('CTF_App:article_detail', pk=self.get_object().pk)
 
 
@@ -154,6 +149,13 @@ def user_signup(request):
         if User.objects.filter(username=username).exists() or User.objects.filter(email=email).exists():
             # Nếu đã tồn tại user với username hoặc email đã nhập, thông báo lỗi
             messages.error(request, 'Username or email already exists.')
+            return render(request, 'CTF_App/signup.html')
+
+        # Kiểm tra mật khẩu có đủ mạnh không
+        try:
+            validate_password(password)
+        except ValidationError as e:
+            messages.error(request, e)
             return render(request, 'CTF_App/signup.html')
 
         # Tạo một user mới
@@ -288,6 +290,16 @@ def change_password(request):
 
 
 class ArticleForm(forms.ModelForm):
+    categories = [
+        ('Web Security', 'Web Security'),
+        ('Cryptography', 'Cryptography'),
+        ('Reverse Engineering', 'Reverse Engineering'),
+        ('Forensics', 'Forensics'),
+        ('Binary Exploitation', 'Binary Exploitation'),
+        ('Misc', 'Misc'),
+    ]
+    category = forms.ChoiceField(choices=categories, label='Category')
+
     class Meta:
         model = Articles
         fields = ['name', 'category']
@@ -340,10 +352,24 @@ def add_section(request, article_id, position=None):
 
     if request.method == 'POST':
         form = SectionForm(request.POST, request.FILES)
+
         if form.is_valid():
+            vdurl = form.cleaned_data['video_url']
+            text_content = form.cleaned_data['text']
+            image_content = form.cleaned_data['image']
+            if (form.cleaned_data['part_type'] == 'text' and text_content == ''):
+                messages.error(request, 'No text found!')
+                return redirect('CTF_App:article_detail', pk=article.id)
+            if (form.cleaned_data['part_type'] == 'image' and not image_content):
+                messages.error(request, 'No image found!')
+                return redirect('CTF_App:article_detail', pk=article.id)
+            if (form.cleaned_data['part_type'] == 'video' and not vdurl):
+                messages.error(request, 'No video_url found!')
+                return redirect('CTF_App:article_detail', pk=article.id)
             new_section = form.save(commit=False)
             new_section.article = article
-
+            if (form.cleaned_data['part_type'] == 'video'):
+                new_section.video_url = vdurl.replace('watch?v=', 'embed/')
             if position is not None:
                 # Update positions of other sections to make room for the new section
                 Sections.objects.filter(article=article, position__gte=position).update(position=F('position') + 1)
@@ -353,6 +379,7 @@ def add_section(request, article_id, position=None):
                 new_section.position = article.sections.count() + 1
 
             new_section.save()
+
             return redirect('CTF_App:article_detail', pk=article.id)
     else:
         form = SectionForm()
@@ -393,12 +420,11 @@ def delete_article(request, article_id):
 
 
 class QuestionForm(forms.ModelForm):
+    question_content = forms.CharField(widget=forms.Textarea, label='Question')
+
     class Meta:
-        model = Question
-        fields = ['content']
-        widgets = {
-            'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
-        }
+        model = QuestionInTest
+        fields = []
 
 
 class AnswerForm(forms.ModelForm):
@@ -417,11 +443,6 @@ def take_test(request, article_id):
     questions_in_test = QuestionInTest.objects.filter(test=test)
     questions = [qit.question for qit in questions_in_test]
 
-    # If the user has already taken the test, redirect them to the result page
-    if request.user.customuser.score != 0:
-        return render(request, 'CTF_App/test_result.html',
-                      {'score': request.user.customuser.score, 'total': len(questions)})
-
     # If the article has no test, redirect them to the article detail page
     if not questions:
         return redirect('CTF_App:article_detail', pk=article_id)
@@ -435,8 +456,10 @@ def take_test(request, article_id):
             selected_answer_id = request.POST.get(f'question_{question.id}')
             if selected_answer_id and int(selected_answer_id) in [ca.id for ca in correct_answers]:
                 score += 1
-            request.user.customuser.score = score
-            request.user.customuser.save()
+
+        request.user.customuser.score += score
+        request.user.customuser.save()
+
         return render(request, 'CTF_App/test_result.html', {'score': score, 'total': total})
 
     return render(request, 'CTF_App/take_test.html', {'article': article, 'questions_in_test': questions_in_test})
@@ -446,34 +469,33 @@ def take_test(request, article_id):
 def edit_test(request, article_id):
     article = get_object_or_404(Articles, id=article_id)
     test, created = Test.objects.get_or_create(id=article.test.id if article.test else None)
-    QuestionInTestFormSet = inlineformset_factory(Test, QuestionInTest, fields=('question',), extra=1,
-                                                  can_delete=True)
+
+    QuestionInTestFormSet = inlineformset_factory(Test, QuestionInTest, fields=('question',), extra=1, can_delete=True)
     AnswerFormSet = inlineformset_factory(Question, Answer, fields=('content', 'result'), extra=1, can_delete=True)
 
     if request.method == 'POST':
         formset = QuestionInTestFormSet(request.POST, instance=test)
         if formset.is_valid():
             formset.save()
-
             for form in formset:
                 if form.instance.pk and form.instance.question:
                     question = form.instance.question
                     answer_formset = AnswerFormSet(request.POST, instance=question, prefix=f'answer_{question.id}')
                     if answer_formset.is_valid():
                         answer_formset.save()
-
             messages.success(request, 'Test edited successfully')
             return redirect('CTF_App:edit_test', article_id=article_id)
     else:
         formset = QuestionInTestFormSet(instance=test)
-        formset_with_answers = []
-        for form in formset:
-            if form.instance.pk and form.instance.question:
-                question = form.instance.question
-                answer_formset = AnswerFormSet(instance=question, prefix=f'answer_{question.id}')
-                formset_with_answers.append((form, answer_formset))
-            else:
-                formset_with_answers.append((form, None))
+
+    formset_with_answers = []
+    for form in formset:
+        if form.instance.pk and form.instance.question:
+            question = form.instance.question
+            answer_formset = AnswerFormSet(instance=question, prefix=f'answer_{question.id}')
+            formset_with_answers.append((form, answer_formset))
+        else:
+            formset_with_answers.append((form, None))
 
     return render(request, 'CTF_App/edit_test.html', {
         'article': article,
@@ -487,6 +509,12 @@ def add_test(request, article_id):
     article = get_object_or_404(Articles, id=article_id)
 
     if request.method == 'POST':
+        if (request.POST.get('difficulty', '') == ''
+                or
+                request.POST.get('difficulty', '') not in ['1', '2', '3']):
+            messages.error(request, 'Please select a difficulty level: 1 (Easy), 2 (Medium), or 3 (Hard)')
+            return redirect('CTF_App:add_test', article_id=article_id)
+
         test = Test.objects.create(difficulty=request.POST.get('difficulty', ''))
         article.test = test
         article.save()
